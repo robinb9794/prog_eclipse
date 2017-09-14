@@ -1,0 +1,41 @@
+package Klausur_2011;
+
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+public class Aufgabe2 {
+	public static void main(String args[]) {
+		new Controller();
+	}
+}
+
+class Model {
+	int width, height;
+
+	Model(int width, int height) {
+		this.width = width;
+		this.height = height;
+	}
+}
+
+class View extends Frame {
+	Model m;
+
+	View(Model m) {
+		this.m = m;
+		setSize(m.width, m.height);
+		setLocationRelativeTo(null);
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				dispose();
+			}
+		});
+		setVisible(true);
+	}
+}
+
+class Controller {
+	Model m = new Model(500, 300);
+	View v = new View(m);
+}

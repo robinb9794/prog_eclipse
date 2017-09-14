@@ -1,0 +1,14 @@
+2017-05-15 11:02:03.404 INFO  AntAgent             - starting agent antWorld245cca26-359e-4f5c-b27b-d48f2c3d7273
+2017-05-15 11:02:03.736 INFO  AntWorld             - new world created (15x28), start is AntCell [row=3, col=19, type=START, food=0, smell=0, stench=0, ants=[]]
+2017-05-15 11:02:06.729 INFO  AntAgent             - service 'antWorld2017' registered
+2017-05-15 11:02:06.729 INFO  AntAgent             - message listener started
+2017-05-15 11:02:06.729 INFO  AntAgent             - agent antWorld245cca26-359e-4f5c-b27b-d48f2c3d7273 started
+2017-05-15 11:02:26.279 INFO  AntAgent$1           - receiving request from 'Flick' with action 'null'
+2017-05-15 11:02:26.279 ERROR AntAgent$1           - unable to execute action for ant 'Flick', invalid message
+2017-05-15 11:02:26.294 INFO  AntAgent             - sending not-understood to 'Flick'
+2017-05-15 11:03:51.140 INFO  AntAgent$1           - receiving request from 'Flick' with action 'null'
+2017-05-15 11:03:51.140 ERROR AntAgent$1           - unable to execute action for ant 'Flick', invalid message
+2017-05-15 11:03:51.140 INFO  AntAgent             - sending not-understood to 'Flick'
+2017-05-15 11:04:41.007 INFO  AntAgent$1           - receiving request from 'Flick' with action 'AntAction [type=ANT_ACTION_BIRTH, color=ANT_COLOR_BLUE]'
+2017-05-15 11:04:41.007 INFO  AntWorld             - ant 'Flick' created and located at AntCell [row=3, col=19, type=START, food=0, smell=0, stench=0, ants=[Flick]]
+2017-05-15 11:04:41.134 INFO  AntAgent             - sending reply to'Flick': Ant [name=Flick, state=ALIVE, currentFood=0, totalFood=0, cell=AntCell [row=3, col=19, type=START, food=0, smell=0, stench=0, ants=[Flick]]]

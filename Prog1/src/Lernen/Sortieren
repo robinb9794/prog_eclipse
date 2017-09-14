@@ -1,0 +1,59 @@
+Bubblesort
+	-von links nach rechts durchlaufen
+	-das aktuelle Element wird mit dem rechten Nachbarn verglichen
+	-wenn das aktuelle Element größer ist, werden sie vertauscht
+	-Beispiel:
+		int temp;
+		for(int i=1; i<a.length; i++) {
+			for(int j=0; j<a.length-i; j++) {
+				if(a[j]>a[j+1]) {
+					temp=a[j];
+					a[j]=a[j+1];
+					a[j+1]=temp;
+				}				
+			}
+		}
+
+Selectionsort
+	-Array teilen (sortiert, unsortiert)
+	-nach dem kleinsten Element suchen
+	-mit dem ersten Element tauschen
+	-Beispiel:
+		for (int i = 0; i < sortieren.length - 1; i++) {
+			for (int j = i + 1; j < sortieren.length; j++) {
+				if (sortieren[i] > sortieren[j]) {
+					int temp = sortieren[i];
+					sortieren[i] = sortieren[j];
+					sortieren[j] = temp;
+				}
+			}
+		}
+
+Insertionsort
+	-ähnlich wie Selectionsort
+	-es wird nicht nach dem kleinsten Element gesucht, sondern 
+	 der Algorithmus geht nach und nach die Elemente des Arrays 
+	 durch und fügt diese im linken, sortierten Teil des Arrays
+	 an passender Stelle ein 
+	-Beispiel:
+		int m,j;
+		for (int i = 1; i < a.length; i++){
+    		 j = i;
+     		 m = a[i];
+     		 while (j > 0 && a[j-1] > m) {
+         		    /*verschiebe F[j-1] nach rechts */
+          		    a[j] = a[j-1];
+           		   j--;
+     		  }
+      		 a[j] = m;
+     		}
+		} 
+		
+		
+		
+		
+		
+		
+		
+		
+		

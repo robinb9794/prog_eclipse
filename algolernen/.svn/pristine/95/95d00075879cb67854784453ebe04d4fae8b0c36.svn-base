@@ -1,0 +1,396 @@
+package uebung09;
+
+public class RedBlackTree_noNH_wM<K extends Comparable<K>, D> {
+
+	public class Node {
+		public Node(K key, D data) {
+			m_Key = key;
+			m_Data = data;
+			m_bIsRed = true;
+		}
+
+		K m_Key;
+		D m_Data;
+		Node m_Left = null;
+		Node m_Right = null;
+		boolean m_bIsRed = true;
+
+		public boolean is4Node() {
+			return m_Left != null && m_Left.m_bIsRed && m_Right != null
+					&& m_Right.m_bIsRed;
+		}
+
+		void convert4Node() {
+			m_Left.m_bIsRed = false;
+			m_Right.m_bIsRed = false;
+			m_bIsRed = true;
+		}
+
+		public boolean is2Node() {
+			if (m_bIsRed) {
+				return false;
+			}
+			if (m_Left != null && m_Left.m_bIsRed == true || m_Right != null
+					&& m_Right.m_bIsRed == true) {
+				return false;
+			}
+			return true;
+		}
+
+		boolean isLeaf() {
+			return (m_Left == null && m_Right == null) // ist 2er-Blatt
+
+					|| (!m_bIsRed && (
+
+					(m_Right != null
+							&& m_Right.m_bIsRed // ist 3er-Blatt 1.fall
+							&& m_Right.m_Left == null
+							&& m_Right.m_Right == null && m_Left == null)
+
+							|| (m_Left != null
+									&& m_Left.m_bIsRed // ist 3er-Blatt 2.fall
+									&& m_Left.m_Left == null
+									&& m_Left.m_Right == null && m_Right == null)
+
+					|| (m_Left != null && m_Left.m_bIsRed
+							&& m_Right != null // ist 4er-Blatt
+							&& m_Right.m_bIsRed && m_Left.m_Left == null
+							&& m_Left.m_Right == null && m_Right.m_Left == null && m_Right.m_Right == null)));
+		}
+	}
+
+	public Node m_Root = null;
+
+	void rotateLeft(Node node, Node son, Node dad) {
+
+		node.m_Right = son.m_Left;
+		son.m_Left = node;
+
+		boolean sonColor = son.m_bIsRed;
+		son.m_bIsRed = node.m_bIsRed;
+		node.m_bIsRed = sonColor;
+
+		if (dad != null) {
+			if (dad.m_Right == node)
+				dad.m_Right = son;
+			else
+				dad.m_Left = son;
+		}
+		if (m_Root == node)
+			m_Root = son;
+	}
+
+	void rotateRight(Node node, Node son, Node dad) {
+
+		node.m_Left = son.m_Right;
+		son.m_Right = node;
+
+		boolean sonColor = son.m_bIsRed;
+		son.m_bIsRed = node.m_bIsRed;
+		node.m_bIsRed = sonColor;
+
+		if (dad != null) {
+			if (dad.m_Right == node)
+				dad.m_Right = son;
+			else
+				dad.m_Left = son;
+		}
+		if (m_Root == node)
+			m_Root = son;
+	}
+
+	// methode um zu erkennen ob 2 rote kanten hinteranderer sind ( alle fälle)
+	// die übernimmt auch jeghliches rotieren
+	public void split(Node node, Node dad, Node grandDad, Node greatGrandDad) {
+
+		if (grandDad != null && dad.m_bIsRed && node.m_bIsRed) {
+			// fall 4
+			if (grandDad.m_Right != null && grandDad.m_Right.m_Right != null
+					&& grandDad.m_Right.m_Right == node) {
+				rotateLeft(grandDad, dad, greatGrandDad);
+			}
+			// fall 5
+			if (grandDad.m_Left != null && grandDad.m_Left.m_Left != null
+					&& grandDad.m_Left.m_Left == node) {
+				rotateRight(grandDad, dad, greatGrandDad);
+			}
+		}
+
+		if (grandDad != null && dad.m_bIsRed && node.m_bIsRed) {
+			// fall 6
+			if (grandDad.m_Right != null && grandDad.m_Right.m_Left != null
+					&& grandDad.m_Right.m_Left == node) {
+
+				rotateRight(dad, node, grandDad);
+				rotateLeft(grandDad, node, greatGrandDad);
+			}
+			// fall 7
+			if (grandDad.m_Left != null && grandDad.m_Left.m_Right != null
+					&& grandDad.m_Left.m_Right == node) {
+				rotateLeft(dad, node, grandDad);
+				rotateRight(grandDad, node, greatGrandDad);
+			}
+		}
+	}
+
+	boolean insert(K key, D data) {
+		if (m_Root == null) {
+			m_Root = new Node(key, data);
+			return true;
+		} else {
+			Node dad = null;
+			Node grandDad = null;
+			Node greatGrandDad = null;
+			Node node = m_Root;
+			// durchlaufen
+			while (node != null) {
+				if (node.is4Node() == true) {
+					if (node == m_Root) {
+						m_Root.m_Left.m_bIsRed = false;
+						m_Root.m_Right.m_bIsRed = false;
+					} else {
+						node.convert4Node();
+						split(node, dad, grandDad, greatGrandDad);
+					}
+				}
+
+				// abstieg
+				greatGrandDad = grandDad;
+				grandDad = dad;
+				dad = node;
+
+				if (dad.m_Key.compareTo(key) == 0)
+					return false;
+				if (dad.m_Key.compareTo(key) < 0) {
+					node = node.m_Right;
+				} else {
+					node = node.m_Left;
+				}
+			}
+
+			// einfügen
+			Node tmp = new Node(key, data);
+			if (dad.m_Key.compareTo(key) < 0) {
+				dad.m_Right = tmp;
+			} else {
+				dad.m_Left = tmp;
+			}
+			split(tmp, dad, grandDad, greatGrandDad);
+			return true;
+		}
+	}
+
+	// Methode zum löschen einzelner Einträge
+	boolean remove(K key) {
+		if (m_Root != null) {
+			Node dad = null;
+			Node grandDad = null;
+			Node greatGrandDad = null;
+			Node node = m_Root;
+
+			// durchlaufen und nach dem key suchen
+			while (node != null && node.m_Key.compareTo(key) != 0) {
+				greatGrandDad = grandDad;
+				grandDad = dad;
+				dad = node;
+				join(node, dad, grandDad, greatGrandDad);
+				if (dad.m_Key.compareTo(key) < 0) {
+					node = node.m_Right;
+				} else {
+					node = node.m_Left;
+				}
+			}
+
+			if (node != null) { // key wurde gefunden
+				Node FoundNode = node;
+				if (node.m_Right == null) {
+					set(node.m_Left, node, grandDad, true);
+				} else {
+					greatGrandDad = grandDad;
+					grandDad = dad;
+					dad = node;
+					node = node.m_Right;
+					join(node, grandDad, grandDad, greatGrandDad);
+					while (node.m_Left != null) {
+						greatGrandDad = grandDad;
+						grandDad = dad;
+						dad = node;
+						node = node.m_Left;
+						join(node, grandDad, grandDad, greatGrandDad);
+					}
+					FoundNode.m_Key = node.m_Key;
+					FoundNode.m_Data = node.m_Data;
+					set(node.m_Right, node, grandDad, true);
+				}
+				System.out.println("Success");
+				return true;
+			} else { // gesuchter key nicht im baum vorhanden
+				return false;
+			}
+		} else { // baum leer
+			return false;
+		}
+	}
+
+	void set(Node node, Node dad, Node GrandDad, boolean copyColours) {
+		if (dad == null) {
+			m_Root = node;
+		} else {
+			if (dad != null ? GrandDad.m_Left == dad : node.m_Key
+					.compareTo(GrandDad.m_Key) < 0) {
+				dad.m_Left = node.m_Left;
+			} else {
+				dad.m_Right = node.m_Left;
+			}
+		}
+		if (copyColours == true && node != null && node.m_Left != null) {
+			node.m_Left.m_bIsRed = node.m_bIsRed;
+		}
+	}
+
+	// Methode zum Aufblähen von Knoten (zum Löschen benötigt)
+	public void join(Node node, Node dad, Node g_dad, Node gg_dad) {
+		if (node.is2Node()) {
+			if (dad == null && node.m_Left != null && node.m_Left.is2Node()
+					&& node.m_Right != null && node.m_Right.is2Node()) {
+				node.m_Left.m_bIsRed = true;
+				node.m_Right.m_bIsRed = true;
+			} else if (dad != null) {
+				Node nephew = getNephew(dad, node);
+				Node nephewDad = getNephewDad(dad, node);
+				if (nephewDad != null && nephewDad.m_bIsRed) {
+					if (g_dad.m_Left == dad) {
+						rotateLeft(g_dad, dad, gg_dad);
+					} else {
+						rotateRight(g_dad, dad, gg_dad);
+					}
+					gg_dad = g_dad; // Global GG_DAD?
+					g_dad = dad; // dad== nephew G_DAD
+					nephew = getNephew(dad, node);
+				}
+				if (nephewDad != null && nephewDad.is2Node()) {
+					node.m_bIsRed = true;
+					nephewDad.m_bIsRed = true;
+					dad.m_bIsRed = false;
+				} else {
+					if (nephew != null && nephew.m_bIsRed) {
+						if (g_dad.m_Left == dad) {
+							rotateLeft(dad, node, g_dad);
+						} else {
+							rotateRight(dad, node, g_dad);
+						}
+						// nephew.rotate(DAD);
+					}
+					if (g_dad.m_Left == dad) {
+						rotateLeft(g_dad, dad, gg_dad);
+					} else {
+						rotateRight(g_dad, dad, gg_dad);
+					}
+					// nephew.rotate(G_DAD);
+				}
+			}
+		}
+	}
+
+	Node getNephewDad(Node dad, Node node) {
+		System.out.println("dad: " + dad.m_Key);
+		if (dad.m_Right == node && dad.m_Left != null) {
+			System.out.println("return left " + dad.m_Left.m_Key);
+			return dad.m_Left;
+		}
+		if (dad.m_Left == node && dad.m_Right != null) {
+			System.out.println("return right " + dad.m_Right.m_Key);
+			return dad.m_Right;
+		}
+		System.out.println("return null" + "dad: " + dad.m_Key + "node: "
+				+ node.m_Key);
+		return null;
+	}
+
+	// Methode um den Neffen zu bekommen sofern vorhanden
+	Node getNephew(Node dad, Node node) {
+		if (dad.m_Right == node && dad.m_Left != null
+				&& dad.m_Left.m_Right != null)
+			return dad.m_Left.m_Right;
+		if (dad.m_Left == node && dad.m_Right != null
+				&& dad.m_Right.m_Left != null)
+			return dad.m_Right.m_Left;
+		return null;
+	}
+
+	// print bintree methode ausm internet--------------------------------
+	public void printBinaryTree() {
+		System.out.println("");
+		System.out.println("");
+		printBinaryTree(m_Root, 0);
+		System.out.println("");
+		System.out.println("");
+	}
+
+	public void printBinaryTree(Node node, int level) {
+		if (node == null)
+			return;
+		printBinaryTree(node.m_Right, level + 1);
+		if (level != 0) {
+			for (int i = 0; i < level - 1; i++)
+				System.out.print("|\t");
+			if (node.m_bIsRed == true)
+				System.out.println("|--rot-->" + node.m_Key);
+			else
+				System.out.println("|------->" + node.m_Key);
+		} else
+			System.out.println(node.m_Key);
+		printBinaryTree(node.m_Left, level + 1);
+	}
+
+	// treeDept ------------------------------------
+	public int treeDept() {
+		return treeDept(m_Root, 0);
+	}
+
+	public int treeDept(Node node, int maxDept) {
+		if (node.m_bIsRed != true)
+			maxDept++;
+
+		int maxDeptLeft = 0;
+		int maxDeptRight = 0;
+
+		if (node.m_Left != null)
+			maxDeptLeft = treeDept(node.m_Left, maxDept);
+		if (node.m_Right != null)
+			maxDeptRight = treeDept(node.m_Right, maxDept);
+
+		if (maxDeptLeft > maxDept)
+			maxDept = maxDeptLeft;
+		if (maxDeptRight > maxDept)
+			maxDept = maxDeptRight;
+
+		return maxDept;
+	}
+
+	// countLeaf ------------------------------------
+	public int countLeaf() {
+		return countLeaf(m_Root);
+	}
+
+	private int countLeaf(Node node) {
+
+		if (node.isLeaf())
+			return 1;
+		else
+			return countLeaf(node.m_Left) + countLeaf(node.m_Right);
+	}
+	
+	// isSorted -------------------------------------
+	public boolean isSorted() {
+		return isSorted(m_Root);
+	}
+	
+	private boolean isSorted(Node n) {
+		if(n == null) return true;
+		else {
+			return (n.m_Left == null || n.m_Left.m_Key.compareTo(n.m_Key) < 0) && (n.m_Right == null || n.m_Right.m_Key.compareTo(n.m_Key) > 0)
+					&& isSorted(n.m_Left) && isSorted(n.m_Right);
+		}
+	}
+}

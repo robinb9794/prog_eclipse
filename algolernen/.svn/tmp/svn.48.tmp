@@ -1,0 +1,42 @@
+package zusatz.uDrawGraphTestumgebung;
+
+import java.io.IOException;
+
+import zusatz.SpeakableString;
+
+public class Run {
+
+	final int anzahlElemente = 20;
+
+	public Run() throws IOException, InterruptedException {
+		RedBlackTree<Integer, String> redBlackTree = new RedBlackTree<Integer,String>();
+		TreePrinter<Integer,String> treePrinter = new TreePrinter<Integer,String>(false, true);
+		SpeakableString s = new SpeakableString(3);
+
+		int[] M = {13, -7, 34, 3, 5, 12, 9, -200, 45, 14, -1, 15, -6, 18, -9, 44};
+		for(int i = 0; i < M.length; ++i) {
+			redBlackTree.insert(M[i], s.getNext());
+		}
+		
+//		UniqueNumberOperator gen = new UniqueNumberOperator(
+//				anzahlElemente,mode.readFile);
+//		
+//		for(int i=0;i<anzahlElemente;++i){
+//			int rand = gen.getUniqueInt();
+//			redBlackTree.insert(rand, "with NodeHandler" +rand);
+//		}
+//		
+		treePrinter.setTree(redBlackTree);
+//		treePrinter.printTree("vor remove");
+		
+		redBlackTree.remove(13);
+		treePrinter.setTree(redBlackTree);
+		
+		treePrinter.printTree("nach remove");
+		treePrinter.client.close();
+	}
+
+	public static void main(String[] args) throws IOException, InterruptedException {
+		new Run();
+	}
+}

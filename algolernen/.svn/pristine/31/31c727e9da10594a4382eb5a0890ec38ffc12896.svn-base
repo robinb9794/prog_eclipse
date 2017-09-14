@@ -1,0 +1,54 @@
+package zusatz.PatriciaTree;
+
+import java.io.IOException;
+import java.util.Vector;
+
+import stuff.SpeakableString;
+
+public class Aufgabe01 {
+	Aufgabe01() throws IOException {
+		TreePrinter printer = new TreePrinter(false, false);
+		PatriciaTree<String> tree = new PatriciaTree<>();
+		SpeakableString s = new SpeakableString(7);
+		int[] M = {1,17,16,3,0,8};
+		
+//		for(int i=0; i<M.length; ++i) {
+//			System.out.println("insert (" + M[i] + ") : " + tree.insert(M[i]));
+//		}
+		
+		for(int i = 0; i < 10; ++i) {
+			System.out.println("insert " + i + " (" + i + ") : " + tree.insert(s.getNext()));
+		}
+		
+//		for(int i = 100; i < 120; ++i) {
+//			System.out.println("insert " + i + " (" + i + ") : " + tree.insert(i));
+//		}
+		
+//		for (int i = 65; i < 91; ++i) {
+//			System.out.println("insert " + i + " (" + i + ") : " + tree.insert((char) i));
+//		}
+
+//		for(int i = 97; i < 123; ++i) {
+//			System.out.println("insert " + i + " (" + i + ") : " + tree.insert(getSpeakableString(5)));
+//		}
+		
+//		System.out.println(patriciaTree_noNH_wM.searchRec('D'));
+//		System.out.println(patriciaTree_noNH_wM.search('A'));
+		System.out.println("MaxDepth: " + tree.maxDepth());
+		System.out.println("MinDepth: " + tree.minDepth());
+		System.out.println("BackLinks: " + tree.countBackLinks());
+		System.out.println("GoldNode: " + tree.getGoldNode());
+		System.out.println("NodeCount: " + tree.countNodes());
+
+//		Vector<Integer> vec = tree.convertToVector();
+//		System.out.println(vec);
+
+		printer.setTree(tree);
+		printer.printTree("PatriciaTree");
+
+	}
+	
+	public static void main(String[] args) throws IOException {
+		new Aufgabe01();
+	}
+}

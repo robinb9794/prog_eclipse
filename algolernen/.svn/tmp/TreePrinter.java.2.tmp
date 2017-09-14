@@ -1,0 +1,69 @@
+package uebung09;
+
+import java.io.IOException;
+<<<<<<< .mine
+import uebung09.Node;
+
+=======
+
+>>>>>>> .r471
+public class TreePrinter<K extends Comparable<K>, D>{
+
+	RedBlackTree tree = null;
+	UDrawGraphClient client = null;
+	public boolean ready = false;
+
+	// Construktor
+	public TreePrinter(boolean console,boolean bat) throws IOException {
+		client = new UDrawGraphClient(console, bat);
+	}
+
+	public void setTree(RedBlackTree tree){
+		this.tree = tree;
+	}
+	
+	// Methoden
+	public void printTree(String title) throws IOException {
+		print(title);
+	}
+
+	// print rb-tree with uDrawGraph
+	// --------------------------------------------------
+	private void print(String title) throws IOException {
+		ready = false;
+		client.newContext(title);
+		if (tree.mRoot == null)
+			return;
+		print(tree.mRoot, tree.mRoot);
+		ready=true;
+	}
+
+	private void print(Node node, Node vater) throws IOException {
+		client.newNode(node);
+		if (node != tree.mRoot) {
+			if (node.mIsRed == true) {
+				if (vater.mLeft != null && vater.mLeft == node) {
+					client.newRedEdgeLeft(vater, node);
+				}
+				if (vater.mRight != null && vater.mRight == node) {
+					client.newRedEdgeRight(vater, node);
+				}
+			} else {
+				if (vater.mLeft != null && vater.mLeft == node) {
+					client.newEdgeLeft(vater, node);
+				}
+				if (vater.mRight != null && vater.mRight == node) {
+					client.newEdgeRight(vater, node);
+				}
+			}
+		}
+		if (node.mLeft != null) {
+			print(node.mLeft, node);
+		}
+		if (node.mRight != null) {
+			print(node.mRight, node);
+		}
+		if (node.mLeft == null && node.mRight == null)
+			client.improve();
+	}
+}
