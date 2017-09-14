@@ -1,5 +1,0 @@
-1. Da bei der Translation (Verschiebung) feste Werte (Offset) auf die jeweiligen Dimensionen aufaddiert werden sollen,
-eine Addition in einer Matritzen-Multiplikation aber nicht möglich ist, behilft man sich einer zusätzlichen Dimension,
-die entsprechend der Einheitsmatrix aufgefüllt ist. Werte welche in der neuen Spalte der Matrix angegeben werden, werden
-nun durch die Multiplikation mit 1 auf die jeweiligen Dimensionen aufaddiert. So entsteht bei einer Bildtransformation
-im n-dimensionalen Raum, aus einer nxn-Matrix eine n+1xn+1-Matrix.
