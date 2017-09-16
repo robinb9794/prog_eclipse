@@ -1,32 +1,16 @@
 package Übung7;
 
-public class Life {
-	public static int rows = 5;
-	public static int columns = 11;
-	public static boolean[][] gameBoard = new boolean[rows][columns];
-
+public class Life{
 	public static void main(String args[]) {
-		init();
-		calc();
-		print();
-		int[][] coordinates = getCoordinates(4);
-		for (int i = 0; i < coordinates.length; i++) {
-			for (int j = 0; j < coordinates[i].length; j++) {
-				System.out.print(coordinates[i][j] + " ");
-			}
-			System.out.println();
-		}
-		// while (true) {
-		// print();
-		// calc();
-		// try {
-		// Thread.sleep(1000);
-		// } catch (InterruptedException e) {
-		// }
-		// }
+		int rows = 5;
+		int columns = 11;
+		boolean[][] gameBoard = new boolean[rows][columns];
+		
+		init(gameBoard);
+
 	}
 
-	public static void init() {
+	public static void init(boolean[][] gameBoard) {
 		for (int i = 0; i < gameBoard.length; i++) {
 			for (int j = 0; j < gameBoard[i].length; j++) {
 				double random = Math.random();
@@ -37,9 +21,30 @@ public class Life {
 				}
 			}
 		}
+		
+		print(gameBoard);
+		
+		int[][] coordinates = getCoordinates(gameBoard,4);
+		
+		for (int i = 0; i < coordinates.length; i++) {
+			for (int j = 0; j < coordinates[i].length; j++) {
+				System.out.print(coordinates[i][j] + " ");
+			}
+			System.out.println();
+		}
+		
+//		while(true){
+//			calc(gameBoard);
+//			try {
+//				Thread.sleep(500);
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
 	}
 
-	public static void print() {
+	public static void print(boolean[][] gameBoard) {
 		for (int i = 0; i < gameBoard.length; i++) {
 			for (int j = 0; j < gameBoard[i].length; j++) {
 				if (gameBoard[i][j] == true) {
@@ -55,12 +60,12 @@ public class Life {
 		System.out.println();
 	}
 
-	public static void calc() {
-		boolean[][] newGameBoard = new boolean[rows][columns];
+	public static void calc(boolean[][] gameBoard) {
+		boolean[][] newGameBoard = new boolean[gameBoard.length][gameBoard[0].length];
 
 		for (int i = 0; i < gameBoard.length; i++) {
 			for (int j = 0; j < gameBoard[i].length; j++) {
-				int counter = getNumberOfNeighbours(i, j);
+				int counter = getNumberOfNeighbours(gameBoard,i, j);
 				if (gameBoard[i][j] == true && counter == 3) {
 					newGameBoard[i][j] = true;
 				} else if (gameBoard[i][j] == true && counter == 2) {
@@ -80,9 +85,11 @@ public class Life {
 				gameBoard[i][j] = newGameBoard[i][j];
 			}
 		}
+		
+		print(gameBoard);
 	}
 
-	public static int getNumberOfNeighbours(int i, int j) {
+	public static int getNumberOfNeighbours(boolean[][] gameBoard, int i, int j) {
 		int numberOfNeighbours = 0;
 		if (gameBoard[(i + 1) % gameBoard.length][j] == true) { // unten
 			++numberOfNeighbours;
@@ -111,18 +118,19 @@ public class Life {
 		return numberOfNeighbours;
 	}
 
-	public static int[][] getCoordinates(int x) {
+	public static int[][] getCoordinates(boolean[][] gameBoard, int x) {
 		if (x >= 0) {
 			int[][] coordinates = new int[1][2];
-			return getCoordinates(x, 0, 0, coordinates);
+			return getCoordinates(gameBoard, x, 0, 0, coordinates);
 		} else {
 			return null;
 		}
 	}
 
-	public static int[][] getCoordinates(int x, int i, int j, int[][] coordinates) {
+	public static int[][] getCoordinates(boolean[][] gameBoard, int x, int i, int j, int[][] coordinates) {
 		if (i < gameBoard.length && j < gameBoard[i].length) {
-			if (getNumberOfNeighbours(i, j) == x) {
+
+			if (getNumberOfNeighbours(gameBoard, i, j) == x) {
 				coordinates[coordinates.length - 1][0] = i;
 				coordinates[coordinates.length - 1][1] = j;
 
@@ -135,8 +143,13 @@ public class Life {
 
 				coordinates = newCoordinates;
 			}
-			coordinates = getCoordinates(x, i, j + 1, coordinates);
-			coordinates = getCoordinates(x, i + 1, 0, coordinates);
+			boolean incrementedJ=false;
+			if(j==gameBoard[i].length-1){
+				i++;
+				j=0;
+				incrementedJ=true;
+			}
+			coordinates = getCoordinates(gameBoard,x, i,incrementedJ?j: j+1, coordinates);
 		}
 
 		return coordinates;
