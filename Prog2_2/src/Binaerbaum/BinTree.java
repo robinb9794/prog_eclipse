@@ -23,12 +23,37 @@ public class BinTree {
 			tree.insert(ran.nextInt(r));
 		}
 		tree.print();
+		
 		System.out.println(tree.countNodes() + " nodes");
 		System.out.println("average " + tree.average());
 		System.out.println("min " + tree.minMax()[0] + ", max " + tree.minMax()[1]);
-		tree.deleteLeafs();
-		tree.print();
 		System.out.println(tree.countNodes() + " nodes");
+		
+		int[] toArray = tree.toArray();
+		for(int i=0; i<toArray.length;i++){
+			System.out.print(toArray[i]+"|");
+		}
+	}
+	
+	public int[] toArray(){
+		int[] toArray = new int[countNodes()];
+		toArray(m_Root,toArray,0);
+		return toArray;
+	}
+	
+	public int toArray(Node n, int[] toArray,int i){
+		if(i<toArray.length){
+			if(n!=null){
+				if(n.m_Left!=null){
+					i = toArray(n.m_Left,toArray,i);
+				}
+				toArray[i++]=n.m_Key;
+				if(n.m_Right!=null){
+					i = toArray(n.m_Right,toArray,i);
+				}
+			}
+		}
+		return i;
 	}
 
 	public int countNodes() {
@@ -37,6 +62,31 @@ public class BinTree {
 
 	public int countNodes(Node n) {
 		return n == null ? 0 : 1 + countNodes(n.m_Left) + countNodes(n.m_Right);
+	}
+	
+	public void insertRandom(int key){
+		if(m_Root==null){
+			m_Root=new Node(key);
+		}else{
+			insertRandom(m_Root,key);
+		}
+	}
+	
+	public void insertRandom(Node n,int key){
+		double r = Math.random();
+		if(r>0.5){
+			if (n.m_Left == null) {
+				n.m_Left = new Node(key);
+			} else {
+				insert(n.m_Left, key);
+			}
+		}else{
+			if (n.m_Right == null) {
+				n.m_Right = new Node(key);
+			} else {
+				insert(n.m_Right, key);
+			}
+		}
 	}
 
 	public void insert(int key) {

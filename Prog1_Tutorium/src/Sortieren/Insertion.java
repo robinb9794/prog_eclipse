@@ -1,5 +1,13 @@
 package Sortieren;
 
+/**
+ * es wird nicht nach dem kleinsten Element gesucht, sondern 
+ * der Algorithmus geht nach und nach die Elemente des Arrays 
+ * durch und fügt diese im linken, sortierten Teil des Arrays
+ *	an passender Stelle ein 
+ * @author Robin
+ *
+ */
 public class Insertion {
 	public static void main(String args[]){
 		int[] a = {4,7,1,6,2,55,7,1,9};

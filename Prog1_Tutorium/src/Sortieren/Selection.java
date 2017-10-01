@@ -1,5 +1,12 @@
 package Sortieren;
 
+/**
+ * - Array teilen in sortiert und unsortiert
+ * - nach dem kleinsten Element suchen
+ * - mit dem ersten Element tauschen
+ * @author Robin
+ *
+ */
 public class Selection {
 	public static void main(String args[]){
 		int[] a = {4,7,1,6,2,55,7,1,9};
