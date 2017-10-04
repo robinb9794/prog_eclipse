@@ -1,0 +1,50 @@
+package zusatz.PatriciaTree;
+
+public class Node<K extends Comparable<K>> {
+	K m_Key;
+	Node<K> m_Left;
+	Node<K> m_Right;
+	int m_BitPos;
+
+	public Node(K key, int bitPos) {
+		this(key, bitPos, null);
+	}
+
+	public Node(K key, int bitPos, Node<K> succ) {
+		m_Key = key;
+		m_BitPos = bitPos;
+		boolean left = left(key, bitPos);
+		m_Left = left ? this : succ;
+		m_Right = left ? succ : this;
+	}
+
+	public boolean isGold() {
+		return (m_Left == null && m_Right == this) || (m_Left == this && m_Right == null);
+	}
+
+	@Override
+	public String toString() {
+		return "Bit: " + m_BitPos + " Key: " + m_Key;
+	}
+	
+	public boolean left(K key, int bitPos) {
+		if(key instanceof Character) {
+			char c = (Character) key;
+			return (c & (1 << bitPos)) == 0;
+		}
+		else if(key instanceof String) {
+			String str = (String) key;
+			int cPos = bitPos/8;
+			char c = str.length() > cPos ? str.charAt(cPos) : '\0';
+			return (c & (1 << bitPos%8)) == 0;
+		}
+		else if(key instanceof Integer) {
+			int i = (Integer) key;
+			return (i & (1 << bitPos)) == 0;
+			
+		}
+		else {
+			return false;
+		}
+	}
+}

@@ -1,0 +1,190 @@
+package uebung10.aufgabe01;
+
+import java.util.Vector;
+
+public class PatriciaTree_noNH_wM {
+	public PatriciaTree_noNH_wM() {
+		m_Root = null;
+	}
+
+	private boolean left(char c, int bitPos) {
+		return (c & (1 << bitPos)) == 0;
+	}
+
+	public boolean insert(char c) {
+		if(m_Root == null) {
+			m_Root = new Node(c, 0);
+			return true;
+		}
+
+		int lastBitPos = -1;
+		Node node = m_Root;
+		Node dad = null;
+
+		while(node != null && lastBitPos < node.m_BitPos) {
+			lastBitPos = node.m_BitPos;
+			dad = node;
+			node = left(c, node.m_BitPos) ? node.m_Left : node.m_Right;
+		}
+
+		int newBitPos = 0;
+		if(node == null) {
+			newBitPos = dad.m_BitPos + 1;
+		}
+		else if(node.m_Key == c) {
+			return false;
+		}
+		else {
+			while(left(c, newBitPos) == left(node.m_Key, newBitPos))
+				++newBitPos;
+
+			lastBitPos = -1;
+			while(node != null && lastBitPos < node.m_BitPos && node.m_BitPos < newBitPos) {
+				lastBitPos = node.m_BitPos;
+				dad = node;
+				node = left(c, node.m_BitPos) ? node.m_Left : node.m_Right;
+			}
+		}
+
+		Node newNode = new Node(c, newBitPos, node);
+		if(left(c, dad.m_BitPos))
+			dad.m_Left = newNode;
+		else
+			dad.m_Right = newNode;
+		return true;
+	}
+
+	public boolean searchRec(char key) {
+		return searchRec(m_Root, key);
+	}
+
+	private boolean searchRec(Node node, char key) {
+		if(node == null)
+			return false;
+		if(node.m_Key == key)
+			return true;
+		Node tmp = left(key, node.m_BitPos) ? node.m_Left : node.m_Right;
+		if(tmp.m_BitPos > node.m_BitPos)
+			return searchRec(tmp, key);
+		return false;
+	}
+
+	public boolean search(char c) {
+		Node tmp = m_Root;
+		int lastBitPos = -1;
+		while(tmp != null && lastBitPos < tmp.m_BitPos && Integer.MAX_VALUE > tmp.m_BitPos) {
+			if(tmp.m_Key == c)
+				return true;
+			lastBitPos = tmp.m_BitPos;
+			tmp = left(c, lastBitPos) ? tmp.m_Left : tmp.m_Right;
+		}
+		return false;
+	}
+
+	public boolean remove(char c) {
+		return false;
+	}
+
+	public int maxDepth() {
+		return depth(m_Root, -1, true);
+	}
+
+	public int minDepth() {
+		return depth(m_Root, -1, false);
+	}
+
+	private int depth(Node node, int lastBitPos, boolean max) {
+		if(node == null)
+			return 0;
+		if(lastBitPos < node.m_BitPos)
+			return max ? Math.max(depth(node.m_Left, node.m_BitPos, max), depth(node.m_Right, node.m_BitPos, max)) + 1
+					   : Math.min(depth(node.m_Left, node.m_BitPos, max), depth(node.m_Right, node.m_BitPos, max)) + 1;
+		else
+			return 0;
+	}
+
+	public Character getGoldNode() {
+		return getGoldNode(m_Root, -1);
+	}
+
+	private Character getGoldNode(Node n, int i) {
+		if(n == null || n.m_BitPos <= i)
+			return null;
+		else if(n.isGold())
+			return n.m_Key;
+		else {
+			Character k = getGoldNode(n.m_Left, n.m_BitPos);
+			if(k != null)
+				return k;
+			else
+				return getGoldNode(n.m_Right, n.m_BitPos);
+		}
+	}
+	
+	public Character getNullNode() {
+		return getNullNode(m_Root, -1);
+	}
+	
+	private Character getNullNode(Node n, int bitPos) {
+		if(n == null || n.m_BitPos <= bitPos)
+			return null;
+		else if(n.isNull())
+			return n.m_Key;
+		else {
+			Character k = getNullNode(n.m_Left, n.m_BitPos);
+			if(k != null)
+				return k;
+			else
+				return getNullNode(n.m_Right, n.m_BitPos);
+		}
+	}
+
+	public int countNodes() {
+		return countNodes(m_Root, -1);
+	}
+
+	private int countNodes(Node n, int i) {
+		if(n == null || n.m_BitPos <= i)
+			return 0;
+		else
+			return 1 + countNodes(n.m_Left, n.m_BitPos) + countNodes(n.m_Right, n.m_BitPos);
+	}
+
+	public int countBackLinks() {
+		return countBackLinks(m_Root, -1);
+	}
+
+	private int countBackLinks(Node n, int i) {
+		if(n == null || n.m_BitPos <= i)
+			return 0;
+		else
+			return (n.hasBackLink() ? 1 : 0) + countBackLinks(n.m_Left, n.m_BitPos) + countBackLinks(n.m_Right, n.m_BitPos);
+	}
+
+	public int countSelfLinks() {
+		return countSelfLinks(m_Root, -1);
+	}
+
+	private int countSelfLinks(Node n, int i) {
+		if(n == null || n.m_BitPos <= i)
+			return 0;
+		else
+			return (n.hasSelfLink() ? 1 : 0) + countSelfLinks(n.m_Left, n.m_BitPos) + countSelfLinks(n.m_Right, n.m_BitPos);
+	}
+
+	public Vector<Character> convertToVector() {
+		Vector<Character> vRet = new Vector<>();
+		convertToVector(m_Root, vRet, -1);
+		return vRet;
+	}
+
+	private void convertToVector(Node n, Vector<Character> v, int i) {
+		if(n != null && i < n.m_BitPos) {
+			convertToVector(n.m_Left, v, n.m_BitPos);
+			v.add(n.m_Key);
+			convertToVector(n.m_Right, v, n.m_BitPos);
+		}
+	}
+
+	Node m_Root;
+}

@@ -1,0 +1,124 @@
+package uebung13;
+
+public class Huffman {
+	private final int MAX = 512;
+	private int m_Root;
+	private int[] m_Count;
+	private int[] m_Dad = new int[MAX];
+	private int[] m_Code = new int[MAX / 2];
+	private int[] m_Len = new int[MAX / 2];
+	private int[] m_Left = new int[MAX];
+	private int[] m_Right = new int[MAX];
+	private String m_Arg;
+      
+	public Huffman(String arg) {
+		m_Arg = arg;
+		compress();
+	}
+
+	private void compress() {
+		m_Count = new int[MAX];
+
+		for (int i = 0; i < m_Arg.length(); ++i) {
+			++m_Count[m_Arg.charAt(i)];
+		}
+
+		PrioHeap ph = new PrioHeap(MAX);
+		for (int i = 0; i < MAX / 2; ++i) {
+			if (m_Count[i] > 0) {
+				ph.insert(i, m_Count[i]);
+			}
+		}
+		
+		//Initialisierung LEFT/RIGHT mit -1 da 0 ein gueltiger Charakter ist!
+		for(int i=0;i<MAX;++i)
+			m_Left[i]=m_Right[i]=-1;
+		
+		//Aufbau des Baumes
+		if (ph.size() == 1) {
+			//Sepzialfall: Das Alphabet besteht nur aus einem einzigen Buchstaben! Illegaler Baum!
+			int i = MAX/2;
+			int node = ph.remove(ph.m_Keys);
+			m_Dad[i] = 0;
+			m_Dad[node] = i;
+			m_Count[i] = node;
+			m_Left[i] = node;
+//			m_Right[i] = node; // Eigentlich nicht notwending, aber zur Vervollständigung! ;o)
+			m_Root = node;
+		} 
+		else {
+			for (int i = MAX / 2; !ph.isEmpty(); ++i) {
+				int s1 = ph.remove(ph.m_Keys);
+				int s2 = ph.remove(ph.m_Keys);
+
+				m_Dad[i] = 0;
+				m_Dad[s1] = i;
+				m_Dad[s2] = -i;
+				m_Count[i] = m_Count[s1] + m_Count[s2];
+
+				m_Left[i] = s1;
+				m_Right[i] = s2;
+				m_Root = i;
+				if (!ph.isEmpty()) {
+					ph.insert(i, m_Count[i]);
+				}
+			}
+		}
+		//Baum fertig 
+		
+		//Code Tabelle aufbauen
+		for (int i = 0; i < MAX / 2; ++i) {
+			int len = 0, code = 0;
+			if (m_Count[i] > 0) {
+				for (int t = m_Dad[i]; t != 0; t = m_Dad[t], ++len)
+					if (t < 0) {
+						code += 1 << len;
+						t = -t;
+					}
+			}
+			m_Code[i] = code;
+			m_Len[i] = len;
+		}
+	}
+
+	public String decode(String arg) {
+		String tmp = "";
+		for (int i = 0; i < arg.length();) {
+			int node = m_Root;
+			while (m_Left[node] != -1) {
+				node = arg.charAt(i++) == '0' ? m_Left[node] : m_Right[node];
+			}
+			tmp=tmp+(char) node;
+		}
+		return tmp;
+	}
+
+	public String encode() {
+		String tmp = "";
+		for (int i = 0; i < m_Arg.length(); ++i) {
+			char c = m_Arg.charAt(i);
+			char code = (char) m_Code[c];
+			int len = m_Len[c];
+			for (int j = 0; j < len; ++j) {
+				tmp = tmp + ((code >> (len - j - 1)) & 1);
+			}
+		}
+		return tmp;
+	}
+	
+	// Berechnung Verhältnis des Speicherplatz-Verbrauchs Vorher zu Nachher
+	// in Prozent.
+	public String getUncompressedBinaryString(){
+		String unCompressed="";
+		for(int i=0;i<m_Arg.length();++i){
+			for(int a = 31;a>=0;unCompressed=unCompressed+((m_Arg.charAt(i)>>a&1)==1?"1":"0"),--a);
+		}
+		return unCompressed;
+	}
+	
+	public double getCompressRatio(){
+		double sizeNorm = m_Arg.length()*32;
+		double sizeComp = encode().length();
+		return 100/sizeNorm*sizeComp;
+	}
+}

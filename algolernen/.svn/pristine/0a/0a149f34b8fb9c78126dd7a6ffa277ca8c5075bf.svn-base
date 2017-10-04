@@ -1,0 +1,28 @@
+package zusatz.uDrawGraphTestumgebung;
+
+public class SpeakableString {
+	private int mLen;
+	
+	public SpeakableString(int len) {
+		mLen = len;
+	}
+	
+	public String getNext() {
+		String s = new String();
+		for(int j = 0; j < mLen; ++j)
+			s += (j % 2 == 0 ? getconsonant() : getVocale());
+		return s;
+	}
+
+	private static char getVocale() {
+		java.util.Random rnd = new java.util.Random();
+		char[] v = { 'A', 'E', 'I', 'O', 'U' , 'Ä', 'Ö', 'Ü'};
+		return v[rnd.nextInt(v.length - 1)];
+	}
+
+	private static char getconsonant() {
+		java.util.Random rnd = new java.util.Random();
+		char[] v = { 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z' };
+		return v[rnd.nextInt(v.length - 1)];
+	}
+}
