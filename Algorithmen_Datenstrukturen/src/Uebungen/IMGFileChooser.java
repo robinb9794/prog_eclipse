@@ -68,7 +68,7 @@ class View extends JFrame {
 		chooseImages.addActionListener(e -> {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setMultiSelectionEnabled(true);
-			FileNameExtensionFilter filter = new FileNameExtensionFilter(".jpg/.png", "jpg", "png");
+			FileNameExtensionFilter filter = new FileNameExtensionFilter(".jpg/.gif", "jpg", "gif");
 			chooser.setFileFilter(filter);
 			int returnVal = chooser.showOpenDialog(this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
