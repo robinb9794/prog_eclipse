@@ -11,6 +11,11 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.awt.image.MemoryImageSource;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -25,15 +30,16 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import model.Model;
 
-public class GUI extends JFrame{
+public class GUI extends JFrame implements Runnable{
 	private static final long serialVersionUID = 1L;
 	private Model m_Mod;
-	private final Comp m_Comp = new Comp();
-	private final JPanel m_pMain = new JPanel(new BorderLayout());
+	private final JPanel m_pCenter = new JPanel();
 	private final JPanel m_pSouth = new JPanel(new BorderLayout());
 	private final JPanel m_pDisplayImages = new JPanel(new FlowLayout());
 	private final JScrollPane m_Pane = new JScrollPane(m_pDisplayImages);
@@ -41,30 +47,45 @@ public class GUI extends JFrame{
 	private final JMenu m_Menu = new JMenu("Settings");
 	private final JMenuItem m_miChooseImages = new MyMenuItem();
 	private JFileChooser m_Chooser;
-	
+	private MemoryImageSource m_imgSrc;
+	private Image m_Img;
+		
 	public GUI(Model m){
-		this.m_Mod=m;
+		super("Let's fade...");
+		this.m_Mod=m;		
+		this.m_imgSrc= new MemoryImageSource(m_Mod.getM_imgWidth(),m_Mod.getM_imgHeight(),m_Mod.getM_Pix(),0,m_Mod.getM_imgWidth());
+		this.m_imgSrc.setAnimated(true);		
+		m_Img=createImage(m_imgSrc);
+		
 		m_Pane.setVisible(false);
+		
 		setPreferredSize(new Dimension(m_Mod.getM_Width(),m_Mod.getM_Height()));
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setLayout(new BorderLayout());
+		setLayout(new BorderLayout());		
 		addComponentListener(new ComponentAdapter(){
 			public void componentResized(ComponentEvent e){
 				m.setM_Width(getWidth());
 				m.setM_Height(getHeight());
 			}
+		});		
+		addWindowListener(new WindowAdapter(){
+			public void windowClosing(WindowEvent e){
+				m.setM_XClicked(true);
+				dispose();
+			}
 		});
+		
 		m_Menu.add(m_miChooseImages);
 		m_Bar.add(m_Menu);
 		setJMenuBar(m_Bar);
 
 		m_pSouth.add(m_Pane);
-		m_pMain.add(BorderLayout.CENTER, m_Comp);
-		m_pMain.add(BorderLayout.SOUTH, m_pSouth);
-
-		add(m_pMain);
+		add(BorderLayout.SOUTH, m_pSouth);
+		add(BorderLayout.CENTER,m_pCenter);
+		
 		pack();
 		setVisible(true);
+		
+		new Thread(this).start();
 	}
 	
 	class MyMenuItem extends JMenuItem implements ActionListener{
@@ -77,15 +98,36 @@ public class GUI extends JFrame{
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			m_Chooser = new MyChooser();
+			m_Chooser = new ImageChooser();
 		}
 		
 	}
+	
+	class ImageCheckBox extends JCheckBox implements ActionListener{
+		private static final long serialVersionUID = 1L;
+		private ImageIcon image;
 
-	class MyChooser extends JFileChooser{
+		public ImageCheckBox(ImageIcon image, int i){
+			this.image=image;
+			setName("cb_" + (i + 1));
+			addActionListener(this);
+		}
+
+		public void actionPerformed(ActionEvent arg0) {
+			if(isSelected()){
+				System.out.println("added selected image");
+				m_Mod.getM_selectedImages().add(image.getImage());
+			}else{
+				System.out.println("removed image");
+				m_Mod.getM_selectedImages().remove(image.getImage());
+			}
+		}	
+	}
+
+	class ImageChooser extends JFileChooser{
 		private static final long serialVersionUID = 1L;
 
-		public MyChooser(){
+		public ImageChooser(){
 			setMultiSelectionEnabled(true);
 			FileNameExtensionFilter filter = new FileNameExtensionFilter(".jpg/.gif", "jpg", "gif");
 			setFileFilter(filter);
@@ -96,19 +138,12 @@ public class GUI extends JFrame{
 					try {
 						JPanel panel = new JPanel(new BorderLayout());
 						JLabel label = new JLabel();
-						label.setSize(new Dimension(60, 60));
-						ImageIcon image = new ImageIcon(ImageIO.read(files[i]).getScaledInstance(label.getWidth(), label.getHeight(), Image.SCALE_SMOOTH));
+						label.setSize(new Dimension(m_Mod.getM_imgWidth(),m_Mod.getM_imgHeight()));
+						ImageIcon image = new ImageIcon(ImageIO.read(files[i]).getScaledInstance(m_Mod.getM_imgWidth(),m_Mod.getM_imgHeight(), Image.SCALE_SMOOTH));
 						label.setIcon(image);
 						label.setName("image_" + (i + 1));
-						label.addMouseListener(new MouseAdapter() {
-							public void mouseClicked(MouseEvent e) {
-								m_Mod.setM_clickedImage(image.getImage());
-								m_Comp.repaint();
-							}
-						});
 
-						JCheckBox cb = new JCheckBox();
-						cb.setName("cb_" + (i + 1));
+						JCheckBox cb = new ImageCheckBox(image,i);
 
 						panel.add(BorderLayout.WEST, cb);
 						panel.add(BorderLayout.CENTER, label);
@@ -125,18 +160,40 @@ public class GUI extends JFrame{
 				m_Pane.setVisible(true);
 
 				m_pSouth.revalidate();
+				
 			}
-		}
-		
+		}	
 	}
 
-	class Comp extends JComponent{
-		private static final long serialVersionUID = 1L;
-
-		public void paintComponent(Graphics g){
-			if(m_Mod.getM_clickedImage()!=null){
-				g.drawImage(m_Mod.getM_clickedImage(), m_Mod.getM_Width() / 2 - 100, m_Mod.getM_Height() / 3 - 100, 200, 200, null);
-			}
+	public void run() {
+		while(!m_Mod.isM_XClicked()){
+			try {
+				Thread.sleep(20);
+				int shift=255;
+				while(m_Mod.getM_selectedImages().size()>0&&!m_Mod.isM_XClicked()){
+					for(int i=0; i<m_Mod.getM_selectedImages().size();i++){
+						int[] imgPixel = m_Mod.convertToPixels(m_Mod.getM_selectedImages().get(i));
+						for(int j=0; j<m_Mod.getM_imgWidth();j++){
+							for(int k=0; k<m_Mod.getM_imgHeight();k++){
+								int index=j+m_Mod.getM_imgWidth()*k;
+								int pixel=imgPixel[index];
+								//System.out.println(Integer.toBinaryString(pixel));
+								pixel = pixel ^ (shift<<24);
+								//System.out.println(Integer.toBinaryString(pixel));
+								m_Mod.getM_Pix()[index]=pixel;																
+							}
+						}	
+					}
+					m_imgSrc.newPixels();
+					if(m_pCenter.getGraphics()!=null){
+						m_pCenter.getGraphics().drawImage(m_Img,0,0,m_pCenter.getWidth(),m_pCenter.getHeight(),null);
+					}
+					--shift;
+					Thread.sleep(200);
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}			
 		}
 	}
 }
