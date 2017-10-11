@@ -70,6 +70,9 @@ public class GUI extends JFrame implements Runnable{
 		addWindowListener(new WindowAdapter(){
 			public void windowClosing(WindowEvent e){
 				m.setM_XClicked(true);
+				synchronized(m_Mod.getLOCK()){
+					m_Mod.getLOCK().notifyAll();
+				}
 				dispose();
 			}
 		});
@@ -117,9 +120,15 @@ public class GUI extends JFrame implements Runnable{
 			if(isSelected()){
 				System.out.println("added selected image");
 				m_Mod.getM_selectedImages().add(image.getImage());
+				if(m_Mod.getM_selectedImages().size()==1){
+					synchronized(m_Mod.getLOCK()){
+						m_Mod.getLOCK().notifyAll();
+					}
+				}
 			}else{
 				System.out.println("removed image");
 				m_Mod.getM_selectedImages().remove(image.getImage());
+				
 			}
 		}	
 	}
@@ -168,28 +177,18 @@ public class GUI extends JFrame implements Runnable{
 	public void run() {
 		while(!m_Mod.isM_XClicked()){
 			try {
-				Thread.sleep(20);
-				int shift=255;
-				while(m_Mod.getM_selectedImages().size()>0&&!m_Mod.isM_XClicked()){
-					for(int i=0; i<m_Mod.getM_selectedImages().size();i++){
-						int[] imgPixel = m_Mod.convertToPixels(m_Mod.getM_selectedImages().get(i));
-						for(int j=0; j<m_Mod.getM_imgWidth();j++){
-							for(int k=0; k<m_Mod.getM_imgHeight();k++){
-								int index=j+m_Mod.getM_imgWidth()*k;
-								int pixel=imgPixel[index];
-								//System.out.println(Integer.toBinaryString(pixel));
-								pixel = pixel ^ (shift<<24);
-								//System.out.println(Integer.toBinaryString(pixel));
-								m_Mod.getM_Pix()[index]=pixel;																
-							}
-						}	
+				synchronized(m_Mod.getLOCK()){
+					while(!(m_Mod.getM_selectedImages().size()>0)){
+						if(m_Mod.getM_selectedImages().size()==0){
+							m_pCenter.getGraphics().clearRect(0, 0, m_pCenter.getWidth(), m_pCenter.getHeight());
+						}
+						System.out.println("waiting for selected images...");
+						m_Mod.getLOCK().wait();
 					}
-					m_imgSrc.newPixels();
-					if(m_pCenter.getGraphics()!=null){
-						m_pCenter.getGraphics().drawImage(m_Img,0,0,m_pCenter.getWidth(),m_pCenter.getHeight(),null);
-					}
-					--shift;
-					Thread.sleep(200);
+				}
+				if(!m_Mod.isM_XClicked()){
+					System.out.println("congrats, you've selected images! Now let's fade...");
+					m_Mod.fade(m_imgSrc, m_pCenter, m_Img);
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();

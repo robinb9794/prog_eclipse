@@ -2,8 +2,11 @@ package model;
 
 import java.awt.Image;
 import java.awt.image.ImageObserver;
+import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
 import java.util.ArrayList;
+
+import javax.swing.JPanel;
 
 public class Model{
 	private int m_Width, m_Height;
@@ -11,6 +14,7 @@ public class Model{
 	private boolean m_XClicked=false;
 	private int[] m_Pix;
 	private int m_imgWidth, m_imgHeight;
+	private final Object LOCK = new Object();
 	
 	public Model(int width, int height){
 		this.m_Width=width;
@@ -36,7 +40,7 @@ public class Model{
 		this.m_Height = m_Height;
 	}
 
-	public ArrayList<Image> getM_selectedImages() {
+	public synchronized ArrayList<Image> getM_selectedImages() {
 		return m_selectedImages;
 	}
 
@@ -44,7 +48,7 @@ public class Model{
 		this.m_selectedImages = m_selectedImages;
 	}
 	
-	public boolean isM_XClicked() {
+	public synchronized boolean isM_XClicked() {
 		return m_XClicked;
 	}
 
@@ -92,4 +96,46 @@ public class Model{
 	      }
 	      return pixel;
 	    }
+
+	public Object getLOCK() {
+		return LOCK;
+	}
+	
+	public void fade(MemoryImageSource imgSrc, JPanel pCenter, Image img){
+		try{
+			int imgIndex=0;
+			
+			while(getM_selectedImages().size()>0&&!isM_XClicked()){
+				int shift=255;
+				imgIndex=++imgIndex%getM_selectedImages().size();
+				System.out.println("fading image "+imgIndex);
+				int[] imgPixel = convertToPixels(getM_selectedImages().get(imgIndex));
+				
+				while(shift!= 100 && getM_selectedImages().size()>0){
+					for(int j=0; j<getM_imgWidth();j++){
+						for(int k=0; k<getM_imgHeight();k++){
+							int index=j+getM_imgWidth()*k;
+							int pixel=imgPixel[index];
+							int comparison = shift<<24;
+							pixel = pixel ^comparison;
+							getM_Pix()[index]=pixel;																
+						}
+					}	
+					
+					imgSrc.newPixels();
+					if(pCenter.getGraphics()!=null){
+						pCenter.getGraphics().drawImage(img,0,0,pCenter.getWidth(),pCenter.getHeight(),null);
+					}
+					
+					--shift;
+					System.out.println("alpha is now "+shift);
+					
+					Thread.sleep(5);
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+	}
 }
