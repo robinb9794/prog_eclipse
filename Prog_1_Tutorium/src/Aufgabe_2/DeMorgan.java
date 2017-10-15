@@ -1,7 +1,7 @@
-package Übung2;
+package Aufgabe_2;
 
 public class DeMorgan {
-	public static void main(String args[]) {
+	public static void main(String args[]){
 		boolean a = false;
 		boolean b = true;
 
@@ -13,5 +13,5 @@ public class DeMorgan {
 			System.out.println("zweite if-Anweisung.");
 
 		}
-	}
+	}	
 }
