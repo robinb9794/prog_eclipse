@@ -22,14 +22,10 @@ public class MatrixVectorMultiplication extends RecursiveAction {
 		int pools = 4;
 
 		ForkJoinPool pool = new ForkJoinPool(pools);
-
-		long start = System.currentTimeMillis();
-
+		
 		doIt(pool, matrix, vector, result);
 
-		long time = System.currentTimeMillis() - start;
-
-		System.out.println("\nDone in " + time + " ms with " + pools + " pool(s)!\n\nThe final result:\n");
+		System.out.println("\nDone! The final result:\n");
 
 		// result ausgeben
 		for (int i = 0; i < result.length; i++) {

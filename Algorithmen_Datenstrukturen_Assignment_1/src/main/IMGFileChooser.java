@@ -1,4 +1,6 @@
-package controller;
+package main;
+
+import controller.Controller;
 
 public class IMGFileChooser {	
 	

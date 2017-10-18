@@ -1,10 +1,13 @@
 package model;
 
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
 import java.util.ArrayList;
+
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class Model {
@@ -14,6 +17,8 @@ public class Model {
 	private int[] m_Pix;
 	private int m_imgWidth, m_imgHeight;
 	private final Object LOCK = new Object();
+	private boolean m_openedHistogram=false;
+	private JLabel[] m_histoValues = new JLabel[4*4*4];
 
 	public Model(int width, int height) {
 		this.m_Width = width;
@@ -135,5 +140,21 @@ public class Model {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public boolean isM_openedHistogram() {
+		return m_openedHistogram;
+	}
+
+	public void setM_openedHistogram(boolean m_openedHistogram) {
+		this.m_openedHistogram = m_openedHistogram;
+	}
+
+	public JLabel[] getM_histoValues() {
+		return m_histoValues;
+	}
+
+	public void setM_histoValues(JLabel[] m_histoValues) {
+		this.m_histoValues = m_histoValues;
 	}
 }
