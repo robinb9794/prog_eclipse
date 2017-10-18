@@ -1,26 +1,21 @@
 package view;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.MemoryImageSource;
 import java.io.File;
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -46,8 +41,6 @@ public class GUI extends JFrame{
 	private final JMenuItem m_miChooseImages = new JMenuItem("Choose images");
 	private final JMenuItem m_miHistogram = new JMenuItem("Histogram");
 	
-	private JDialog m_Dialog;
-	
 	public MemoryImageSource m_imgSrc;
 	public Image m_Img;
 	
@@ -55,10 +48,6 @@ public class GUI extends JFrame{
 	public GUI(Model m) {
 		super("Let's fade...");
 		this.m_Mod = m;
-		this.m_imgSrc = new MemoryImageSource(m_Mod.getM_imgWidth(), m_Mod.getM_imgHeight(), m_Mod.getM_Pix(), 0,
-				m_Mod.getM_imgWidth());
-		this.m_imgSrc.setAnimated(true);
-		m_Img = createImage(m_imgSrc);
 
 		m_Pane.setVisible(false);
 
@@ -76,9 +65,6 @@ public class GUI extends JFrame{
 				synchronized (m_Mod.getLOCK()) {
 					m_Mod.getLOCK().notifyAll();
 				}
-				if(m_Mod.isM_openedHistogram()){
-					m_Dialog.dispose();
-				}
 				dispose();
 			}
 		});
@@ -87,12 +73,7 @@ public class GUI extends JFrame{
 			new MyImageChooser();
 		});
 		m_miHistogram.addActionListener(e->{
-			if(m_Mod.isM_openedHistogram()){
-				m_Dialog.setVisible(true);
-			}else{
-				m_Dialog = new MyHistogram(this);
-				m_Mod.setM_openedHistogram(true);
-			}
+
 		});
 		m_Menu.add(m_miChooseImages);
 		m_Menu.add(m_miHistogram);
@@ -107,20 +88,29 @@ public class GUI extends JFrame{
 		setLocationRelativeTo(null);
 		setVisible(true);
 	}
+	
+	public void paint(Graphics g) {
+		if (m_pCenter.getGraphics() != null && m_imgSrc!=null) {
+			m_pCenter.getGraphics().drawImage(m_Img, 0, 0, m_pCenter.getWidth(), m_pCenter.getHeight(), null);
+		}
+	}
 
 	class ImageCheckBox extends JCheckBox implements ActionListener {
 		private static final long serialVersionUID = 1L;
 		private ImageIcon image;
+		private int index;
 
-		public ImageCheckBox(ImageIcon image) {
+		public ImageCheckBox(ImageIcon image, int index) {
 			this.image = image;
+			this.index=index;
 			addActionListener(this);
 		}
 
 		public void actionPerformed(ActionEvent arg0) {
 			if(isSelected()){
 				System.out.println("added selected image");
-				m_Mod.getM_selectedImages().add(image.getImage());
+				m_Mod.getM_selectedImages().add(this.image.getImage());
+				m_Mod.getM_Indexes().add(this.index);
 				if(m_Mod.getM_selectedImages().size()==1){
 					synchronized(m_Mod.getLOCK()){
 						m_Mod.getLOCK().notifyAll();
@@ -128,72 +118,9 @@ public class GUI extends JFrame{
 				}
 			}else{
 				System.out.println("removed image");
-				m_Mod.getM_selectedImages().remove(image.getImage());
+				m_Mod.getM_selectedImages().remove(this.image.getImage());
+				m_Mod.getM_Indexes().remove((Object)this.index);
 			}
-		}
-	}
-	
-	class MyHistogram extends JDialog{
-		private static final long serialVersionUID = 1L;
-
-		public MyHistogram(JFrame parent){
-			setPreferredSize(new Dimension(m_Mod.getM_Width(),m_Mod.getM_Height()/2));
-			setModal(false);
-			addWindowListener(new WindowAdapter(){
-				public void windowClosing(WindowEvent e){
-					m_Mod.setM_openedHistogram(false);
-					dispose();
-				}
-			});
-			setLocationRelativeTo(parent);
-			setLayout(new BorderLayout());
-			add(BorderLayout.NORTH, new JLabel("0: 0-63___1: 64-127___2: 128-191___3: 192-255"));
-			
-			JPanel table = createTable();
-			
-			add(BorderLayout.CENTER,table);
-			add(BorderLayout.CENTER,new JScrollPane(table));
-			pack();
-			setVisible(true);
-		}
-		
-		private JPanel createTable(){
-			JPanel table = new JPanel(new GridLayout(0,4));
-
-			for(int i=0; i<4;i++){
-				for(int j=0; j<4;j++){
-					for(int k=0; k<4;k++){
-						if(i==0&&j==0&&k==0){
-							table.add(new JLabel("Red"));
-							table.add(new JLabel("Green"));
-							table.add(new JLabel("Blue"));
-							table.add(new JLabel("Pixel Count"));
-						}
-						JLabel label_i = new JLabel(Integer.toString(i));
-						JLabel label_j = new JLabel(Integer.toString(j));
-						JLabel label_k = new JLabel(Integer.toString(k));
-						JLabel label_v = new JLabel(Integer.toString(i*j+k));
-						
-						label_i.setBorder(BorderFactory.createMatteBorder(1,1,0,1,Color.BLACK));
-						label_j.setBorder(BorderFactory.createMatteBorder(1,0,0,1,Color.BLACK));
-						label_k.setBorder(BorderFactory.createMatteBorder(1,0,0,1,Color.BLACK));
-						label_v.setBorder(BorderFactory.createMatteBorder(1,0,0,1,Color.BLACK));
-						
-						label_i.setHorizontalAlignment(JLabel.CENTER);
-						label_j.setHorizontalAlignment(JLabel.CENTER);
-						label_k.setHorizontalAlignment(JLabel.CENTER);
-						label_v.setHorizontalAlignment(JLabel.CENTER);
-
-						table.add(label_i);
-						table.add(label_j);
-						table.add(label_k);	
-						table.add(label_v);		
-						
-						m_Mod.getM_histoValues()[i*j+k]=label_v;
-					}
-				}
-			}
-			return table;
 		}
 	}
 
@@ -213,25 +140,21 @@ public class GUI extends JFrame{
 					try {
 						JPanel panel = new JPanel(new BorderLayout());
 						JLabel label = new JLabel();
-						label.setSize(new Dimension(m_Mod.getM_imgWidth(), m_Mod.getM_imgHeight()));
+						label.setSize(new Dimension(100,100));
 
 						File file = files[i];
 						if(file.isDirectory()){
 							files=file.listFiles();
 							file = files[i];
 						}
+						
+						m_Mod.getM_originalImages().add(ImageIO.read(file));
 
-						ImageIcon icon = new ImageIcon(ImageIO.read(file).getScaledInstance(m_Mod.getM_imgWidth(),
-								m_Mod.getM_imgHeight(), Image.SCALE_SMOOTH));
+						ImageIcon icon = new ImageIcon(ImageIO.read(file).getScaledInstance(100,100, Image.SCALE_SMOOTH));
 
 						label.setIcon(icon);
-						label.addMouseListener(new MouseAdapter(){
-							public void mouseEntered(MouseEvent e){
 
-							}
-						});
-
-						JCheckBox cb = new ImageCheckBox(icon);
+						JCheckBox cb = new ImageCheckBox(icon,i);
 
 						panel.add(BorderLayout.WEST, cb);
 						panel.add(BorderLayout.CENTER, label);
