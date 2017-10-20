@@ -2,7 +2,7 @@ package main;
 
 import controller.Controller;
 
-public class IMGFileChooser {	
+public class Assignment01 {	
 	
 	public static void main(String args[]){
 		new Controller();
