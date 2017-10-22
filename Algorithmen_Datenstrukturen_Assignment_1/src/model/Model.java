@@ -1,5 +1,13 @@
 package model;
 
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.ArrayList;
 
 public class Model {
@@ -38,5 +46,16 @@ public class Model {
 			m_Pix[i] = colorShuffle(pix1[i], pix2[i], p);
 		}
 
+	}
+	
+	public void createHistogram(ImageToFade img){
+		Writer writer;
+		try {
+			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("histogram.txt"),"UTF-8"));
+			writer.write("test");
+			writer.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

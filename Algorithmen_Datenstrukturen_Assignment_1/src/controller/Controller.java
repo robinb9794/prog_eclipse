@@ -9,8 +9,10 @@ public class Controller implements Runnable {
 
 	public Controller() {
 		m_Mod = new Model(500, 500);
-		m_View = new Crossfade(m_Mod);
-
+		m_View = new Crossfade(m_Mod);	
+	}
+	
+	public void start(){
 		new Thread(this).start();
 	}
 
@@ -33,10 +35,10 @@ public class Controller implements Runnable {
 							firstImgIndex = m_Mod.m_Indexes.get(counter%m_Mod.m_Indexes.size());
 							secondImgIndex = m_Mod.m_Indexes.get((counter+1)%m_Mod.m_Indexes.size());
 							System.out.println("fading image "+firstImgIndex+" and "+secondImgIndex);
-							for(int p = 0; p<=100; p+=5){
+							for(int p = 0; p<=100; p+=2){
 								m_Mod.shuffle(p, firstImgIndex, secondImgIndex);
 								m_View.repaint();
-								Thread.sleep(100);
+								Thread.sleep(50);
 							}
 							++counter;
 

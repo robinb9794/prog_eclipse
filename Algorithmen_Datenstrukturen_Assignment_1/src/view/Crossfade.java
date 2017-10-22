@@ -7,6 +7,8 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.MemoryImageSource;
@@ -33,6 +35,7 @@ public class Crossfade extends JFrame {
 	public final JScrollPane m_Pane = new JScrollPane(m_pDisplayImages);
 	public final Component m_Comp = new Component();
 	public JDialog m_Dialog;
+	public JPanel m_pSouth;
 	public MemoryImageSource m_imgSrc;
 	public Image m_Img;
 
@@ -48,18 +51,9 @@ public class Crossfade extends JFrame {
 		setPreferredSize(new Dimension(m_Mod.m_Width, m_Mod.m_Height));
 		setLayout(new BorderLayout());
 		setResizable(false);
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				m_Mod.m_XClicked = true;
-				synchronized (m_Mod.LOCK) {
-					m_Mod.LOCK.notifyAll();
-				}
-				if(m_Dialog!=null){
-					m_Dialog.dispose();
-				}
-				dispose();
-			}
-		});
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		add(BorderLayout.SOUTH,m_pSouth);
+
 		add(BorderLayout.CENTER, m_Comp);
 
 		pack();
@@ -77,17 +71,11 @@ public class Crossfade extends JFrame {
 		}
 	}
 
-	class ImageViewer extends JDialog {
+	class ImageViewer extends JPanel {
 		private static final long serialVersionUID = 1L;
 
 		public ImageViewer(File[] files) {
-			setPreferredSize(new Dimension(m_Mod.m_Width, 120));
-			int x = (int) getToolkit().getDefaultToolkit().getScreenSize().getWidth();
-			int y = (int) getToolkit().getDefaultToolkit().getScreenSize().getHeight();
-
-			setLocation(x/2-m_Mod.m_Width/2, (y/2)+(m_Mod.m_Height/2)-20);
-			setResizable(false);
-			setModal(false);
+			setLayout(new BorderLayout());
 			for (int i = 0; i < files.length; i++) {
 				try {
 					JPanel panel = new JPanel(new BorderLayout());
@@ -99,12 +87,18 @@ public class Crossfade extends JFrame {
 						files = file.listFiles();
 						file = files[i];
 					}
-
-					m_Mod.m_originalImages.add(new ImageToFade(file,m_Mod.m_Width, m_Mod.m_Height));
-
+					
+					ImageToFade img = new ImageToFade(file,m_Mod.m_Width, m_Mod.m_Height);
+					m_Mod.m_originalImages.add(img);
+					
 					ImageIcon icon = new ImageIcon(ImageIO.read(file).getScaledInstance(100, 100, Image.SCALE_SMOOTH));
-
 					label.setIcon(icon);
+
+					label.addMouseListener(new MouseAdapter(){
+						public void mouseClicked(MouseEvent e){
+							m_Mod.createHistogram(img);
+						}
+					});
 
 					JCheckBox cb = new ImageCheckBox(icon, i);
 
@@ -119,10 +113,14 @@ public class Crossfade extends JFrame {
 			m_Pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			m_Pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 			m_Pane.setBounds(0, 0, m_Mod.m_Width, 50);
-			m_pCenter.add(BorderLayout.SOUTH, m_Pane);
-			add(BorderLayout.CENTER, m_pCenter);
-			pack();
-			setVisible(true);
+			m_Pane.revalidate();
+			add(BorderLayout.CENTER,m_Pane);
+			
+
+			//m_pCenter.add(BorderLayout.SOUTH, m_Pane);
+//			add(BorderLayout.CENTER, m_pCenter);
+//			pack();
+//			setVisible(true);
 		}
 	}
 
@@ -138,7 +136,7 @@ public class Crossfade extends JFrame {
 			int returnVal = showOpenDialog(this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File[] files = getSelectedFiles();
-				m_Dialog = new ImageViewer(files);
+				m_pSouth = new ImageViewer(files);
 			} else {
 				System.out.println("no images selected");
 			}
@@ -173,10 +171,11 @@ public class Crossfade extends JFrame {
 	}
 
 	public void paint(Graphics g) {
+		super.paint(g);
 		m_Comp.repaint();
 	}
 	
 	public void clear(){
-		getGraphics().clearRect(0, 0, getWidth(), getHeight());
+		m_Comp.getGraphics().clearRect(0, 0, getWidth(), getHeight());
 	}
 }

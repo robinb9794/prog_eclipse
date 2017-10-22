@@ -3,6 +3,7 @@ package model;
 import java.awt.Image;
 import java.awt.image.PixelGrabber;
 import java.io.File;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
