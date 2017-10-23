@@ -3,16 +3,15 @@ package model;
 import java.awt.Image;
 import java.awt.image.PixelGrabber;
 import java.io.File;
-import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
-public class ImageToFade {
+public class OriginalImage {
 	private PixelGrabber m_Grabber;
 	private int[] m_Pix;
 	private Image m_Img;
 	
-	public ImageToFade(File file, int width, int height){		
+	public OriginalImage(File file, int width, int height){		
 		try {
 			this.m_Img = ImageIO.read(file).getScaledInstance(width, height, Image.SCALE_SMOOTH);
 			this.m_Pix = new int[width*height];

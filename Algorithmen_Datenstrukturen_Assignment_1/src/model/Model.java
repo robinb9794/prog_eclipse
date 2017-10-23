@@ -1,22 +1,22 @@
 package model;
 
+import java.awt.Point;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Model {
 	public int m_Width, m_Height;
 	public int[] m_Pix;
-	public ArrayList<ImageToFade> m_originalImages = new ArrayList<ImageToFade>();
+	public ArrayList<OriginalImage> m_originalImages = new ArrayList<OriginalImage>();
 	public ArrayList<Integer> m_Indexes = new ArrayList<Integer>();
 	public boolean m_XClicked = false;
 	public final Object LOCK = new Object();
+	public Point m_Point;
 
 	public Model(int width, int height) {
 		this.m_Width = width;
@@ -36,8 +36,8 @@ public class Model {
 	}
 
 	public void shuffle(int p, int pic1, int pic2) {
-		ImageToFade img1 = m_originalImages.get(pic1);
-		ImageToFade img2 = m_originalImages.get(pic2);
+		OriginalImage img1 = m_originalImages.get(pic1);
+		OriginalImage img2 = m_originalImages.get(pic2);
 
 		int[] pix1 = img1.getGrappedPixels();
 		int[] pix2 = img2.getGrappedPixels();
@@ -47,15 +47,53 @@ public class Model {
 		}
 
 	}
-	
-	public void createHistogram(ImageToFade img){
+
+	public void createHistogram() {
 		Writer writer;
 		try {
-			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("histogram.txt"),"UTF-8"));
-			writer.write("test");
+			OriginalImage img = m_originalImages.get(0);
+			HashMap<String, Integer> histogram = new HashMap<String, Integer>();
+
+			for (int i = 0; i < m_Width * m_Height; i++) {
+				int key = img.getGrappedPixels()[i];
+				int value = 0;
+				if (!histogram.containsKey(key)) {
+					++value;
+					for (int j = i; j < m_Width * m_Height; j++) {
+						if (img.getGrappedPixels()[j] == key) {
+							++value;
+						}
+					}
+				}
+				histogram.put(Integer.toBinaryString(key), value);
+			}
+
+			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("histogram.txt"), "UTF-8"));
+			for (Map.Entry e : histogram.entrySet()) {
+				writer.write("0b"+e.getKey()+"\t:\t"+e.getValue()+"\n");
+			}
 			writer.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void lens(int pic1, int pic2) {
+		OriginalImage img1 = m_originalImages.get(pic1);
+		OriginalImage img2 = m_originalImages.get(pic2);
+
+		int[] pix1 = img1.getGrappedPixels();
+		int[] pix2 = img2.getGrappedPixels();
+
+		for (int x = 0; x < m_Width; x++) {
+			for (int y = 0; y < m_Height; y++) {
+				final int IDX = y * m_Width + x;
+				final int X_DIFF = m_Point.x - x;
+				final int Y_DIFF = m_Point.y - y;
+				final int VAL = (X_DIFF * X_DIFF + Y_DIFF * Y_DIFF) / 100;
+				final int MAX_VAL = VAL > 100 ? 100 : VAL;
+				m_Pix[IDX] = colorShuffle(pix1[IDX], pix2[IDX], MAX_VAL);
+			}
 		}
 	}
 }
