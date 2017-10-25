@@ -1,4 +1,4 @@
-package Aufgabe3;
+package Aufgabe_3;
 
 public class Tabelle {
 	public static void main(String args[]){
@@ -6,7 +6,7 @@ public class Tabelle {
 		while(i<n){
 			while(j<n){
 				if(i==0){
-					System.out.print(j+"\t");
+					System.out.print(j+"\t"); 
 				}else if(j==0){
 					System.out.print(i+"\t");
 				}else{

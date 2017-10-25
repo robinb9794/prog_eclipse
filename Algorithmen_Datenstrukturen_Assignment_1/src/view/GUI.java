@@ -7,6 +7,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.MemoryImageSource;
@@ -35,20 +36,21 @@ public class GUI extends JFrame {
 	public final JPanel m_pCenter = new JPanel(new BorderLayout());
 	public final JPanel m_pDisplayImages = new JPanel(new FlowLayout());
 	public final JScrollPane m_Pane = new JScrollPane(m_pDisplayImages);
-	public final Component m_Comp = new Component();
+	public final Component m_Comp = new Component(this);
 	public JDialog m_Dialog;
 	public JPanel m_pSouth;
 	public MemoryImageSource m_imgSrc;
 	public Image m_Img;
-	public boolean m_choseImages=false,m_Fade=false, m_Lens=false;
+	boolean m_clickedFirst;
+	public boolean m_choseImages = false, m_Fade = false, m_Lens = false;
 
 	public GUI(Model m) {
 		super("Let's fade...");
 		this.m_Mod = m;
 
 		new ImageChooser();
-		
-		if(m_choseImages){
+
+		if (m_choseImages) {
 			m_imgSrc = new MemoryImageSource(m_Mod.m_Width, m_Mod.m_Height, m_Mod.m_Pix, 0, m_Mod.m_Width);
 			m_imgSrc.setAnimated(true);
 
@@ -56,26 +58,47 @@ public class GUI extends JFrame {
 			setLayout(new BorderLayout());
 			setResizable(false);
 			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			add(BorderLayout.SOUTH,m_pSouth);
+			add(BorderLayout.SOUTH, m_pSouth);
 			add(BorderLayout.CENTER, m_Comp);
 			setJMenuBar(new TheMenu());
 			pack();
 			setLocationRelativeTo(null);
 			setVisible(true);
-		}		
+		}
 	}
 
 	class Component extends JComponent {
 		private static final long serialVersionUID = 1L;
-		
-		public Component(){
-			addMouseMotionListener(new MouseMotionAdapter(){
-				public void mouseMoved(MouseEvent e){
-					m_Mod.m_Point=e.getPoint();
-					if(m_Lens){
-						synchronized(m_Mod.LOCK){
+
+		public Component(JFrame father) {
+			addMouseMotionListener(new MouseMotionAdapter() {
+				public void mouseMoved(MouseEvent e) {
+					m_Mod.m_lensPoint = e.getPoint();
+					if (m_Lens) {
+						synchronized (m_Mod.LOCK) {
 							m_Mod.LOCK.notifyAll();
 						}
+					}
+				}
+
+				public void mouseDragged(MouseEvent e) {
+					if (m_clickedFirst) {
+						m_Mod.m_morphPoint_2 = e.getPoint();
+						m_clickedFirst = false;
+					} else {
+						m_Mod.m_morphPoint_1 = e.getPoint();
+						m_clickedFirst = true;
+					}
+				}
+			});
+			addMouseListener(new MouseAdapter() {//
+				public void mouseReleased(MouseEvent e) {
+					if (m_Mod.m_morphPoint_1 != null && m_Mod.m_morphPoint_2 != null) {
+						Object[] options = { "move", "rotate", "scale", "distort" };
+						int n = JOptionPane.showOptionDialog(father, "Choose wisely:", "Morphology",
+								JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options,
+								options[0]);
+						m_Mod.morph(n);
 					}
 				}
 			});
@@ -93,39 +116,39 @@ public class GUI extends JFrame {
 
 		public ImageViewer(File[] files) {
 			setLayout(new BorderLayout());
-			try{
+			try {
 				for (int i = 0; i < files.length; i++) {
-						JPanel panel = new JPanel(new BorderLayout());
-						JLabel label = new JLabel();
-						label.setSize(new Dimension(100, 100));
+					JPanel panel = new JPanel(new BorderLayout());
+					JLabel label = new JLabel();
+					label.setSize(new Dimension(100, 100));
 
-						File file = files[i];
-						if (file.isDirectory()) {
-							files = file.listFiles();
-							file = files[i];
-						}
-						
-						OriginalImage img = new OriginalImage(file,m_Mod.m_Width, m_Mod.m_Height);
-						m_Mod.m_originalImages.add(img);
-						
-						ImageIcon icon = new ImageIcon(ImageIO.read(file).getScaledInstance(100, 100, Image.SCALE_SMOOTH));
-						label.setIcon(icon);
-
-						JCheckBox cb = new ImageCheckBox(icon, i);
-
-						panel.add(BorderLayout.WEST, cb);
-						panel.add(BorderLayout.CENTER, label);
-						m_pDisplayImages.add(panel);
+					File file = files[i];
+					if (file.isDirectory()) {
+						files = file.listFiles();
+						file = files[i];
 					}
-				
+
+					OriginalImage img = new OriginalImage(file, m_Mod.m_Width, m_Mod.m_Height);
+					m_Mod.m_originalImages.add(img);
+
+					ImageIcon icon = new ImageIcon(ImageIO.read(file).getScaledInstance(100, 100, Image.SCALE_SMOOTH));
+					label.setIcon(icon);
+
+					JCheckBox cb = new ImageCheckBox(icon, i);
+
+					panel.add(BorderLayout.WEST, cb);
+					panel.add(BorderLayout.CENTER, label);
+					m_pDisplayImages.add(panel);
+				}
+
 				m_Pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				m_Pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 				m_Pane.setBounds(0, 0, m_Mod.m_Width, 50);
 				m_Pane.revalidate();
-				add(BorderLayout.CENTER,m_Pane);
-			}catch(Exception e){
+				add(BorderLayout.CENTER, m_Pane);
+			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this, "Error! Please select images.");
-				m_choseImages=false;
+				m_choseImages = false;
 			}
 		}
 	}
@@ -141,11 +164,11 @@ public class GUI extends JFrame {
 			setFileFilter(filter);
 			int returnVal = showOpenDialog(this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
-				m_choseImages=true;
+				m_choseImages = true;
 				File[] files = getSelectedFiles();
 				m_pSouth = new ImageViewer(files);
-			}else{
-				m_Mod.m_XClicked=true;
+			} else {
+				m_Mod.m_XClicked = true;
 			}
 		}
 	}
@@ -169,54 +192,53 @@ public class GUI extends JFrame {
 			}
 		}
 	}
-	
-	class TheMenu extends JMenuBar{
+
+	class TheMenu extends JMenuBar {
 		private static final long serialVersionUID = 1L;
 
-		public TheMenu(){
+		public TheMenu() {
 			JMenu settings = new JMenu("Settings");
 			JMenuItem fade = new JMenuItem("Fade");
 			JMenuItem lens = new JMenuItem("Lens");
 			JMenuItem histo = new JMenuItem("Histogram");
-			
-			fade.addActionListener(e->{
-				if(m_Mod.m_Indexes.size()>1){
-					m_Fade=!m_Fade;
-					m_Lens=false;
-					synchronized(m_Mod.LOCK){
+
+			fade.addActionListener(e -> {
+				if (m_Mod.m_Indexes.size() > 1) {
+					m_Fade = !m_Fade;
+					m_Lens = false;
+					synchronized (m_Mod.LOCK) {
 						m_Mod.LOCK.notifyAll();
 					}
-					
-				}else{
+
+				} else {
 					JOptionPane.showMessageDialog(this, "First select at least two images to fade.");
 				}
-				
-			});		
-			
-			lens.addActionListener(e->{
-				if(m_Mod.m_Indexes.size()==2){
-					m_Lens=!m_Lens;
-					if(m_Lens && !m_Fade){
-						synchronized(m_Mod.LOCK){
+			});
+
+			lens.addActionListener(e -> {
+				if (m_Mod.m_Indexes.size() == 2) {
+					m_Lens = !m_Lens;
+					if (m_Lens && !m_Fade) {
+						synchronized (m_Mod.LOCK) {
 							m_Mod.LOCK.notifyAll();
 						}
-					}else{
-						m_Fade=false;
+					} else {
+						m_Fade = false;
 					}
-				}else{
+				} else {
 					JOptionPane.showMessageDialog(this, "Please select exactly two images.");
-				}				
-			});	
-			
-			histo.addActionListener(e->{
-				if(m_Mod.m_Indexes.size()==1){
+				}
+			});
+
+			histo.addActionListener(e -> {
+				if (m_Mod.m_Indexes.size() == 1) {
 					m_Mod.createHistogram();
 					JOptionPane.showMessageDialog(this, "Created histogram.");
-				}else{
+				} else {
 					JOptionPane.showMessageDialog(this, "Please select exactly one image to create histogram.");
 				}
 			});
-			
+
 			settings.add(fade);
 			settings.add(lens);
 			settings.add(histo);

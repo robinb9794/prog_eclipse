@@ -1,8 +1,8 @@
-package Aufgabe3;
+package Aufgabe_3;
 
 public class TestAusgabe {
 	public static void main(String args[]){
-		int x = 100;
+		int x = 200;
 		int n = 2;
 		int i;
 		boolean flag;

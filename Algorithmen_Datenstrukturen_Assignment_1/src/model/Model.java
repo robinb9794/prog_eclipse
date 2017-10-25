@@ -16,7 +16,7 @@ public class Model {
 	public ArrayList<Integer> m_Indexes = new ArrayList<Integer>();
 	public boolean m_XClicked = false;
 	public final Object LOCK = new Object();
-	public Point m_Point;
+	public Point m_lensPoint, m_morphPoint_1, m_morphPoint_2;
 
 	public Model(int width, int height) {
 		this.m_Width = width;
@@ -55,22 +55,19 @@ public class Model {
 			HashMap<String, Integer> histogram = new HashMap<String, Integer>();
 
 			for (int i = 0; i < m_Width * m_Height; i++) {
-				int key = img.getGrappedPixels()[i];
-				int value = 0;
+				String key = Integer.toBinaryString(img.getGrappedPixels()[i]);
+				int value = 1;
 				if (!histogram.containsKey(key)) {
-					++value;
-					for (int j = i; j < m_Width * m_Height; j++) {
-						if (img.getGrappedPixels()[j] == key) {
-							++value;
-						}
-					}
+					histogram.put(key, value);
+				} else {
+					value = histogram.get(key);
+					histogram.replace(key, value + 1);
 				}
-				histogram.put(Integer.toBinaryString(key), value);
 			}
 
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("histogram.txt"), "UTF-8"));
 			for (Map.Entry e : histogram.entrySet()) {
-				writer.write("0b"+e.getKey()+"\t:\t"+e.getValue()+"\n");
+				writer.write("0b" + e.getKey() + "\t:\t" + e.getValue() + "\n");
 			}
 			writer.close();
 		} catch (Exception e) {
@@ -88,12 +85,16 @@ public class Model {
 		for (int x = 0; x < m_Width; x++) {
 			for (int y = 0; y < m_Height; y++) {
 				final int IDX = y * m_Width + x;
-				final int X_DIFF = m_Point.x - x;
-				final int Y_DIFF = m_Point.y - y;
+				final int X_DIFF = m_lensPoint.x - x;
+				final int Y_DIFF = m_lensPoint.y - y;
 				final int VAL = (X_DIFF * X_DIFF + Y_DIFF * Y_DIFF) / 100;
 				final int MAX_VAL = VAL > 100 ? 100 : VAL;
 				m_Pix[IDX] = colorShuffle(pix1[IDX], pix2[IDX], MAX_VAL);
 			}
 		}
+	}
+	
+	public void morph(int n){
+		
 	}
 }

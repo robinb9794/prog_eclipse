@@ -44,7 +44,7 @@ public class Controller implements Runnable {
 								firstImgIndex = m_Mod.m_Indexes.get(0);
 								secondImgIndex = m_Mod.m_Indexes.get(1);
 								m_Mod.lens(firstImgIndex, secondImgIndex);
-								System.out.println("[x="+((int)m_Mod.m_Point.getX())+",y="+((int)m_Mod.m_Point.getY())+"]");
+								System.out.println("[x="+((int)m_Mod.m_lensPoint.getX())+",y="+((int)m_Mod.m_lensPoint.getY())+"]");
 								m_View.repaint();
 								m_Mod.LOCK.wait();
 							}
