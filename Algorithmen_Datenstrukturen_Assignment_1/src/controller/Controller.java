@@ -1,15 +1,16 @@
 package controller;
 
+import model.Matrix;
 import model.Model;
 import view.GUI;
 
 public class Controller implements Runnable {
-	Model m_Mod;
-	GUI m_View;
+	Model mod;
+	GUI view;
 
 	public Controller() {
-		m_Mod = new Model(500, 500);
-		m_View = new GUI(m_Mod);
+		mod = new Model(500, 500);
+		view = new GUI(mod);
 	}
 
 	public void start() {
@@ -17,37 +18,78 @@ public class Controller implements Runnable {
 	}
 
 	public void run() {
-		while (!m_Mod.m_XClicked && m_View.m_choseImages) {
+		while (!view.closedFrame && view.choseImages) {
 			try {
-				synchronized (m_Mod.LOCK) {
-					while(!m_Mod.m_XClicked){
-						while (!(m_Mod.m_Indexes.size() > 1) && !m_Mod.m_XClicked) {
-							System.out.println("waiting for at least two selected images...");
-							m_View.m_Fade=false;
-							m_View.m_Lens=false;
-							m_Mod.LOCK.wait();
-						}
-						int counter = 0;
-						int firstImgIndex, secondImgIndex;
-						while (m_Mod.m_Indexes.size() > 1) {
-							firstImgIndex = m_Mod.m_Indexes.get(counter % m_Mod.m_Indexes.size());
-							secondImgIndex = m_Mod.m_Indexes.get((counter + 1) % m_Mod.m_Indexes.size());
-							if (m_View.m_Fade && !m_View.m_Lens) {
-								System.out.println("fading image " + firstImgIndex + " and " + secondImgIndex);
+				synchronized (mod.LOCK) {
+					while(!view.closedFrame){
+						while (!view.closedFrame && mod.TASK==null) {
+							System.out.println("waiting for actions...");
+							mod.TASK=null;
+							view.running=false;
+							mod.LOCK.wait();
+							if(mod.selectedIndexes.size()>0){
+								mod.insertInArray(mod.originalImages.get(mod.selectedIndexes.get(0)).imgPix, mod.trgPix);
+							}
+							view.repaint();
+						}						
+						view.running=true;	
+						int counter = 0, srcImgIndex, bgImgIndex;
+						while (mod.selectedIndexes.size() > 1 && mod.TASK!=null) {
+							srcImgIndex = mod.selectedIndexes.get(counter % mod.selectedIndexes.size());
+							bgImgIndex = mod.selectedIndexes.get((counter + 1) % mod.selectedIndexes.size());
+							switch(mod.TASK){
+							case FADE:
+								System.out.println("fading image " + srcImgIndex + " and " + bgImgIndex);
 								for (int p = 0; p <= 100; p += 2) {
-									m_Mod.shuffle(p, firstImgIndex, secondImgIndex);
-									m_View.repaint();
+									mod.shuffle(p, srcImgIndex, bgImgIndex);
+									view.repaint();
 									Thread.sleep(50);
 								}
 								++counter;
-							} else if (!m_View.m_Fade && m_View.m_Lens) {
-								firstImgIndex = m_Mod.m_Indexes.get(0);
-								secondImgIndex = m_Mod.m_Indexes.get(1);
-								m_Mod.lens(firstImgIndex, secondImgIndex);
-								System.out.println("[x="+((int)m_Mod.m_lensPoint.getX())+",y="+((int)m_Mod.m_lensPoint.getY())+"]");
-								m_View.repaint();
-								m_Mod.LOCK.wait();
+								break;
+//							case LENS:
+//								System.out.println("lensing...");
+//								firstImgIndex = mod.selectedIndexes.get(0);
+//								secondImgIndex = mod.selectedIndexes.get(1);
+//								mod.lens(firstImgIndex, secondImgIndex);
+//								view.repaint();
+//								mod.LOCK.wait();
+//								break;
+							case MOVE:
+								while(mod.p1==null && mod.p2==null){
+									System.out.println("waiting for two clicks...");
+									view.waitingForClicks=true;
+									mod.LOCK.wait();
+									if(mod.p1!=null && mod.p2!=null){
+										mod.setStartAndEnd();
+										mod.srcImg = mod.originalImages.get(mod.selectedIndexes.get(0));
+										mod.bgImg = mod.originalImages.get(mod.selectedIndexes.get(1));
+										mod.insertInArray(mod.srcImg.imgPix, mod.srcPix);
+										mod.insertInArray(mod.bgImg.imgPix, mod.trgPix);
+									}																		
+								}
+								view.waitingForClicks=false;
+								System.out.println("click to move");
+								mod.LOCK.wait();
+								if(mod.p1!=null && mod.p2!=null){
+									System.out.println("moving...");
+									mod.morphMatrix = Matrix.translate(mod.morphX, mod.morphY);
+									mod.morph2();
+									view.repaint();
+								}								
+								break;
+							case ROTATE:
+								break;
+							case SCALE:
+								break;
+							case SHEAR:
+								break;	
+							case DRAW_LINES:
+								break;
+							case DRAW_CIRCLE:
+								break;
 							}
+							
 						}
 					}
 					

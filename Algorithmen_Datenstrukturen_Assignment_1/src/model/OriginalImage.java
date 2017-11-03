@@ -3,26 +3,21 @@ package model;
 import java.awt.Image;
 import java.awt.image.PixelGrabber;
 import java.io.File;
-
 import javax.imageio.ImageIO;
 
 public class OriginalImage {
-	private PixelGrabber m_Grabber;
-	private int[] m_Pix;
-	private Image m_Img;
+	public PixelGrabber grabber;
+	public int[] imgPix;
+	public Image img;
 	
 	public OriginalImage(File file, int width, int height){		
 		try {
-			this.m_Img = ImageIO.read(file).getScaledInstance(width, height, Image.SCALE_SMOOTH);
-			this.m_Pix = new int[width*height];
-			this.m_Grabber = new PixelGrabber(this.m_Img,0,0,width,height,m_Pix,0,width);
-			this.m_Grabber.grabPixels();
+			this.img = ImageIO.read(file).getScaledInstance(width, height, Image.SCALE_SMOOTH);
+			this.imgPix = new int[width*height];
+			this.grabber = new PixelGrabber(this.img,0,0,width,height,imgPix,0,width);
+			this.grabber.grabPixels();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public int[] getGrappedPixels(){
-		return m_Pix;
 	}
 }
