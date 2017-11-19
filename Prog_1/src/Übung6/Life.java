@@ -86,8 +86,6 @@ public class Life {
 					newGameBoard[i][j] = true;
 				} else if (counter > 3 || counter < 2) {
 					newGameBoard[i][j] = false;
-				} else {
-					newGameBoard[i][j] = false;
 				}
 			}
 		}

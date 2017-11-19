@@ -11,22 +11,28 @@ import java.util.Map;
 
 public class Model {
 	public int frameWidth, frameHeight;
+	public int compWidth, compHeight;
 	public int startX, startY, endX, endY;
-	public int morphX = 0, morphY = 0;
+	public int translX = 0, translY = 0;
+	public int rotateA=0;
+	public double scaleF=1;
+	public double shearX=0, shearY=0;
 	public int[] srcPix, trgPix;
 	public ArrayList<OriginalImage> originalImages = new ArrayList<OriginalImage>();
 	public ArrayList<Integer> selectedIndexes = new ArrayList<Integer>();
 	public final Object LOCK = new Object();
-	public Point p1, p2;
+	public Point p1, p2, lensP;
 	public Task TASK;
 	public Matrix morphMatrix;
 	public OriginalImage srcImg, bgImg;
+	public boolean firstClicked, waitingForClicks, running;
+	public boolean closedFrame, choseImages;
+	public boolean stopClicked, pixelSaved;
 
 	public Model(int width, int height) {
 		this.frameWidth = width;
 		this.frameHeight = height;
-		this.srcPix = new int[width * height];
-		this.trgPix = new int[width * height];
+		
 	}
 
 	private int singleShuffle(int part1, int part2, int p) {
@@ -40,17 +46,10 @@ public class Model {
 		return (255 << 24) | (red << 16) | (green << 8) | blue;
 	}
 
-	public void shuffle(int p, int pic1, int pic2) {
-		OriginalImage img1 = originalImages.get(pic1);
-		OriginalImage img2 = originalImages.get(pic2);
-
-		int[] pix1 = img1.imgPix;
-		int[] pix2 = img2.imgPix;
-
-		for (int i = 0; i < frameWidth * frameHeight; i++) {
-			trgPix[i] = colorShuffle(pix1[i], pix2[i], p);
+	public void fade(int p) {
+		for (int i = 0; i < compWidth * compHeight; i++) {
+			trgPix[i] = colorShuffle(srcImg.imgPix[i], bgImg.imgPix[i], p);
 		}
-
 	}
 
 	public void createHistogram() {
@@ -59,8 +58,8 @@ public class Model {
 			OriginalImage img = originalImages.get(0);
 			HashMap<String, Integer> histogram = new HashMap<String, Integer>();
 
-			for (int i = 0; i < frameWidth * frameHeight; i++) {
-				String key = Integer.toBinaryString(img.imgPix[i]);
+			for (int i = 0; i < compWidth * compHeight; i++) {
+				String key = binaryToDec(Integer.toBinaryString(img.imgPix[i]));
 				int value = 1;
 				if (!histogram.containsKey(key)) {
 					histogram.put(key, value);
@@ -72,66 +71,56 @@ public class Model {
 
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("histogram.txt"), "UTF-8"));
 			for (Map.Entry e : histogram.entrySet()) {
-				writer.write("0b" + e.getKey() + "\t:\t" + e.getValue() + "\n");
+				writer.write(e.getKey() + "\t:\t" + e.getValue() + "\n");
 			}
 			writer.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	//
-	// public void lens(int index1, int index2) {
-	// OriginalImage img1 = originalImages.get(index1);
-	// OriginalImage img2 = originalImages.get(index2);
-	//
-	// int[] pix1 = img1.imgPix;
-	// int[] pix2 = img2.imgPix;
-	//
-	// for (int x = 0; x < frameWidth; x++) {
-	// for (int y = 0; y < frameHeight; y++) {
-	// final int IDX = y * frameWidth + x;
-	// final int X_DIFF = p1.x - x;
-	// final int Y_DIFF = p1.y - y;
-	// final int VAL = (X_DIFF * X_DIFF + Y_DIFF * Y_DIFF) / 100;
-	// final int MAX_VAL = VAL > 100 ? 100 : VAL;
-	// trgPix[IDX] = colorShuffle(pix1[IDX], pix2[IDX], MAX_VAL);
-	// }
-	// }
-	// }
+	
+	private String binaryToDec(String bin){
+		String b="",g="",r="";
+		for(int i=0; i<8;i++){
+			r=r+bin.charAt(8+i);
+			g=g+bin.charAt(8+i+8);
+			b=b+bin.charAt(8+i+2*8);			
+		}
+		return new Integer(Integer.parseInt(r,2)).toString()+" "+new Integer(Integer.parseInt(g,2)).toString()+" "+new Integer(Integer.parseInt(b,2)).toString();
+	}
 
-	public void morph() {
-		System.out.println("startX " + startX + ", endX " + endX + ", startY " + startY + ", endY " + endY);
-		for (int x = 0; x < frameWidth; x++) {
-			for (int y = 0; y < frameHeight; y++) {
-				Vector trgVec = new Vector(x,y);
-				Vector srcVec = Matrix.multiply(morphMatrix, trgVec);
-				int srcIndex = srcVec.getY() * frameWidth + srcVec.getX();
-				if (0<=srcVec.getY() && srcVec.getY()<frameHeight && 0<=srcVec.getX() && srcVec.getX()<frameWidth) {
-					trgPix[y * frameWidth + x] = srcImg.imgPix[srcIndex];
-				} else {
-					trgPix[y * frameWidth + x] = bgImg.imgPix[y * frameWidth + x];
-					//trgPix[y * frameWidth + x] = 0xffff;
-				}
+	public void lens() {
+		for (int x = 0; x < compWidth; x++) {
+			for (int y = 0; y < compHeight; y++) {
+				int index = y * compWidth + x;
+				int xDif = lensP.x - x;
+				int yDif = lensP.y- y;
+				int value = (xDif * xDif + yDif * yDif) / 100;
+				int maxValue = value > 100 ? 100 : value;
+				trgPix[index] = colorShuffle(srcImg.imgPix[index], bgImg.imgPix[index], maxValue);
 			}
 		}
 	}
-	
-	public void morph2() {
-		System.out.println("startX " + startX + ", endX " + endX + ", startY " + startY + ", endY " + endY);
-		for (int x = startX; x < endX; x++) {
-			for (int y = startY; y < endY; y++) {
+
+	public void morph() {
+		for (int x = 0; x < compWidth; x++) {
+			for (int y = 0; y < compHeight; y++) {
 				Vector trgVec = new Vector(x,y);
 				Vector srcVec = Matrix.multiply(morphMatrix, trgVec);
-				int srcIndex = srcVec.getY() * frameWidth + srcVec.getX();
-				trgPix[trgVec.getY() * frameWidth + trgVec.getX()] = srcPix[srcIndex];
+				int srcIndex = srcVec.getY() * compWidth + srcVec.getX();
+				if (srcVec.getX()>=startX && srcVec.getY()>=startY && srcVec.getX()<endX && srcVec.getY()<endY) {
+					trgPix[y * compWidth + x] = pixelSaved?srcPix[srcIndex]:srcImg.imgPix[srcIndex];
+				}else{
+					trgPix[y * compWidth + x] = bgImg.imgPix[y * compWidth + x];
+				}
 			}
 		}
 	}
 
 	public void insertInArray(int[] src, int[] trg) {
-		for (int x = 0; x < frameWidth; x++) {
-			for (int y = 0; y < frameHeight; y++) {
-				trg[y * frameWidth + x] = src[y * frameWidth + x];
+		for (int x = 0; x < compWidth; x++) {
+			for (int y = 0; y < compHeight; y++) {
+				trg[y * compWidth + x] = src[y * compWidth + x];
 			}
 		}
 	}
@@ -140,7 +129,40 @@ public class Model {
 		startX = p1.x < p2.x ? p1.x : p2.x;
 		startY = p1.y < p2.y ? p1.y : p2.y;
 		endX = p2.x > p1.x ? p2.x : p1.x;
-		endY = p2.y > p1.y ? p2.y : p1.y;
-		
+		endY = p2.y > p1.y ? p2.y : p1.y;		
+	}
+	
+	public void reset(){
+		TASK=null;
+		running=false;
+		stopClicked=false;
+		pixelSaved=false;
+		p1=null;
+		p2=null;
+		translX=0;
+		translY=0;
+		rotateA=0;
+		scaleF=1;
+		shearX=0;
+		shearY=0;
+		for(int x=0; x<compWidth;x++){
+			for(int y=0; y<compHeight;y++){
+				srcPix[y*compHeight+x]=0;
+				trgPix[y*compHeight+x]=0;
+			}
+		}
+	}
+	
+	public void setCompValues(int width, int height){
+		compWidth=width;
+		compHeight=height;
+		this.srcPix = new int[compWidth * compHeight];
+		this.trgPix = new int[compWidth * compHeight];
+	}
+	
+	public void grapPixels(){
+		for(OriginalImage oImg : originalImages){
+			oImg.setPixels(compWidth, compHeight);
+		}
 	}
 }

@@ -8,16 +8,6 @@ public class Approximate3D {
 
 	public Approximate3D() {
 		Point3D[] punkte = new Point3D[3];
-
-//		for (int i = 0; i < punkte.length; i++) {
-//			punkte[i] = new Point3D((int) (Math.random() * 1000),// Fülle das
-//																	// Punkte []
-//																	// mit
-//																	// Random-Testwerten
-//					(int) (Math.random() * 1000), (int) (Math.random() * 1000));
-//		}
-//		punkte[punkte.length-1] = new Point3D(2, 3, 10);
-//		System.out.println(punkte[punkte.length-1]);
 		
 		punkte[0] = new Point3D(1,0, 0);
 		punkte[1]= new Point3D(0, 5, 0);
